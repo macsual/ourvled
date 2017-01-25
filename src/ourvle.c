@@ -118,6 +118,10 @@ ovle_create_pidfile(const char *name)
         return -1;
     }
 
+    /*
+     * FHS says, "The file must consist of the process identifier in
+     * ASCII-encoded decimal, followed by a newline character."
+     */
     len = snprintf(pid, sizeof (pid_t), "%ld\n", (long) ovle_pid);
     if (write(fd, pid, len) != len) {
         fprintf(stderr, "write() to \"%s\" failed\n", name);
