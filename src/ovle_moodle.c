@@ -1,9 +1,11 @@
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <unistd.h>
 
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include "ovle_config.h"
@@ -23,12 +25,8 @@ ovle_moodle_get_token(int fd, char *token)
     char http_request[BUFSIZ], http_request_body[128];
     char http_response[BUFSIZ];
     struct json_parse j;
-    struct http_parse_header h;
+    struct ovle_http_parse_header h;
     char host[HOST_NAME_MAX];
-    struct ovle_http_url u;
-
-    if (ovle_http_parse_url(url, &u) == -1)
-        return -1;
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);
@@ -113,13 +111,9 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
     char *name, *value;
     char http_request[BUFSIZ];
     char http_response[BUFSIZ];
-    struct ovle_http_url u;
     struct json_parse j;
-    struct http_parse_header h;
+    struct ovle_http_parse_header h;
     char host[HOST_NAME_MAX];
-
-    if (ovle_http_parse_url(url, &u) == -1)
-        return -1;
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);
@@ -192,6 +186,12 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
 
             ovle_log_debug2("JSON object member \"%s\" : %s", name, value);
 
+            /*
+             * The Moodle userid value is the only information needed from the
+             * site info so the rest of the JSON object is discarded as it is
+             * assumed to be valid since the host is trusted, it is machine
+             * generated and inconsequential to the program flow.
+             */
             if (name_len == 6 && ovle_str6cmp(name, 'u', 's', 'e', 'r', 'i', 'd')) {
                 (void) ovle_strlcpy(userid, value, INT64_LEN + 1);
                 break;
@@ -216,13 +216,9 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
     size_t name_len, field_len, val_len, host_len;
     char *name, *field, *value;
     char *id, *shortname;
-    struct http_parse_header h;
+    struct ovle_http_parse_header h;
     struct json_parse j, k;
     char host[HOST_NAME_MAX];
-    struct ovle_http_url u;
-
-    if (ovle_http_parse_url(url, &u) == -1)
-        return -1;
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);

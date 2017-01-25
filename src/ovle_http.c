@@ -196,7 +196,7 @@ done:
 }
 
 int
-ovle_http_parse_header_line(char *buf, struct http_parse_header *h)
+ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
 {
     unsigned char ch;
     unsigned char *p;

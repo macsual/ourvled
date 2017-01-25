@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -5,6 +6,9 @@
 #include <unistd.h>
 
 #include <arpa/inet.h>      /* struct sockaddr_in, htons(), inet_pton() */
+
+#include <netinet/in.h>     /* IPPROTO_TCP */
+#include <netinet/tcp.h>    /* TCP_NODELAY */
 
 #include <sys/socket.h>     /* AF_INET */
 #include <sys/types.h>
@@ -15,32 +19,20 @@
 #include "ovle_string.h"
 
 int
-ovle_http_open_connection(const char *url)
+ovle_http_open_connection(struct ovle_http_url *u)
 {
     int fd;
+    const int tcp_nodelay = 1;
     size_t host_len;
     char host[HOST_NAME_MAX];
     struct addrinfo hints;
     struct addrinfo *p, *servinfo;
     struct sockaddr_in addr;
-    struct ovle_http_url u;
-
-    if (ovle_http_parse_url(url, &u) == -1)
-        return -1;
-
-    host_len = u.host_end - u.host_start;
-    (void) memcpy(host, u.host_start, host_len);
-    host[host_len] = '\0';
 
     if (1 /* TODO */) {
         addr.sin_family = AF_INET;  /* OurVLE doesn't support IPv6 */
-        addr.sin_port = htons(u.port);
-
-        /*
-         * Moodle website address is validated during parsing so this function
-         * will not fail
-         */
-        (void) inet_pton(AF_INET, "196.3.0.96", &addr.sin_addr);
+        addr.sin_addr = u->host_address;
+        addr.sin_port = htons(u->port);
 
 #if defined linux && defined SOCK_CLOEXEC
         fd = socket(AF_INET, SOCK_CLOEXEC | SOCK_STREAM, IPPROTO_TCP);
@@ -71,6 +63,10 @@ ovle_http_open_connection(const char *url)
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
 
+        host_len = u->host_end - u->host_start;
+        (void) memcpy(host, u->host_start, host_len);
+        host[host_len] = '\0';
+
         /* pass NULL to avoid service name resolution */
         if (getaddrinfo(host, NULL, &hints, &servinfo) != 0) {
             fprintf(stderr, "getaddrinfo() failed\n");
@@ -94,7 +90,7 @@ ovle_http_open_connection(const char *url)
                 continue;
             }
 
-            ((struct sockaddr_in *)p->ai_addr)->sin_port = htons(u.port);
+            ((struct sockaddr_in *)p->ai_addr)->sin_port = htons(u->port);
 
             if (connect(fd, p->ai_addr, sizeof (struct sockaddr_in)) == -1) {
                 if (close(fd) == -1)
@@ -117,6 +113,20 @@ ovle_http_open_connection(const char *url)
         }
 
         freeaddrinfo(servinfo);
+    }
+
+    /*
+     * Disable Nagle's algorithm.
+     *
+     * Each HTTP request is constructed in its entirety in a single buffer
+     * before writing to the socket of the connection.
+     */
+    if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const void *) &tcp_nodelay, sizeof (int)) == -1) {
+        fprintf(stderr, "setsockopt() TCP_NODELAY failed\n");
+        if (close(fd) == -1)
+            fprintf(stderr, "close() failed\n");
+
+        return -1;
     }
 
     return fd;

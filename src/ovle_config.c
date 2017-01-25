@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <fcntl.h>
@@ -6,7 +7,11 @@
 #include <strings.h>        /* strncasecmp() */
 #include <unistd.h>
 
+#include <arpa/inet.h>
+
 #include <sys/stat.h>
+
+#include "config.h"
 
 #include "ovle_config.h"
 #include "ovle_http.h"
@@ -16,8 +21,9 @@
 int ovle_daemon_flag;
 
 char url[OVLE_HTTP_URL_MAX];
+struct ovle_http_url u;
 char username[OVLE_UWI_STU_ID_LEN + 1];
-char password[OVLE_DOB_LEN + 1];
+char password[100];
 char token[OVLE_MD5_HASH_LEN + 1];
 char service[OVLE_MOODLE_SERVICE_NAME_LEN + 1];
 
@@ -138,9 +144,16 @@ ovle_read_config(void)
     char *field, *value;
     char buf[BUFSIZ];
     struct ovle_parse c;
-    struct ovle_http_url u;
+    char *home_path;
+    char conf_file_path[PATH_MAX];
 
-    fd = open("/etc/ourvle.conf", O_RDONLY);
+    home_path = getenv("HOME");
+    if (home_path == NULL)
+        return -1;
+
+    (void) snprintf(conf_file_path, sizeof conf_file_path, "%s/." PACKAGE_NAME, home_path);
+
+    fd = open(conf_file_path, O_RDONLY);
     if (fd == -1) {
         fprintf(stderr, "failed to parse config file\n");
         return -1;
@@ -180,12 +193,19 @@ ovle_read_config(void)
                 (void) ovle_strlcpy(username, value, sizeof username);
             else if (strcmp(field, "password") == 0)
                 (void) ovle_strlcpy(password, value, sizeof password);
-            else if (strcmp(field, "service") == 0)
+            else if (strcmp(field, "service_shortname") == 0)
                 (void) ovle_strlcpy(service, value, sizeof service);
             else if (strcmp(field, "token") == 0)
                 (void) ovle_strlcpy(token, value, sizeof token);
-            else if (strncasecmp(field, "URL", sizeof "URL" - 1) == 0)
+            else if (strncasecmp(field, "URL", sizeof "URL" - 1) == 0) {
                 (void) ovle_strlcpy(url, value, sizeof url);
+
+                if (ovle_http_parse_url(url, &u) == -1)
+                    return -1;
+            } else if (strcmp(field, "ip_address") == 0) {
+                if (inet_pton(AF_INET, value, &u.host_address) != 1)
+                    return -1;
+            }
         }
 
         p = c.value_end + 2;

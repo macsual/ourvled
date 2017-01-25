@@ -3,6 +3,7 @@
 
 #include <limits.h> /* HOST_NAME_MAX */
 
+#include "ovle_http.h"
 #include "ovle_moodle.h"
 
 /* use smallest signed 64 bit long because of the minus sign */
@@ -19,13 +20,13 @@
  * a URL, FDQN is longest.  HOST_NAME_MAX includes storage for the terminating
  * null character so adding an extra 1 (one) byte in this constant is implicit.
  */
-#define OVLE_HTTP_URL_MAX               HOST_NAME_MAX                         \
-    + (sizeof "https://:65535/" - 1)
+#define OVLE_HTTP_URL_MAX   HOST_NAME_MAX + (sizeof "https://:65535/" - 1)
 
 extern int ovle_daemon_flag;
 extern char url[OVLE_HTTP_URL_MAX];
-extern char username[OVLE_UWI_STU_ID_LEN + 1];          /* UWI Student ID */
-extern char password[OVLE_DOB_LEN + 1];                 /* DOB */
+extern struct ovle_http_url u;
+extern char username[OVLE_UWI_STU_ID_LEN + 1];          /* UWI Student ID # */
+extern char password[100];
 extern char token[OVLE_MD5_HASH_LEN + 1];
 extern char service[OVLE_MOODLE_SERVICE_NAME_LEN + 1];
 

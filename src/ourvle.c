@@ -8,9 +8,6 @@
 #include <netdb.h>
 #include <unistd.h>
 
-#include <netinet/in.h>     /* IPPROTO_TCP */
-#include <netinet/tcp.h>    /* TCP_NODELAY */
-
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>      /* ssize_t */
@@ -141,7 +138,6 @@ int
 main(int argc, char *argv[])
 {
     int ourvle_fd;
-    const int tcp_nodelay = 1;
     char userid[INT64_LEN + 1];
 
     if (ovle_get_options(argc, argv) == -1)
@@ -175,15 +171,9 @@ main(int argc, char *argv[])
         return 1;
 
     for (;;) {
-        ourvle_fd = ovle_http_open_connection(url);
+        ourvle_fd = ovle_http_open_connection(&u);
         if (ourvle_fd == -1) {
             fprintf(stderr, "failed to open HTTP connection\n");
-            return 1;
-        }
-
-        /* disable Nagle's algorithm */
-        if (setsockopt(ourvle_fd, IPPROTO_TCP, TCP_NODELAY, (const void *) &tcp_nodelay, sizeof(int)) == -1) {
-            fprintf(stderr, "setsockopt() TCP_NODELAY failed\n");
             return 1;
         }
 
