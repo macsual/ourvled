@@ -31,10 +31,10 @@ char token[OVLE_MD5_HASH_LEN + 1];
 char service[OVLE_MOODLE_SERVICE_NAME_LEN + 1];
 
 struct ovle_parse {
-    char *field_start;
-    char *field_end;
-    char *value_start;
-    char *value_end;
+    unsigned char *field_start;
+    unsigned char *field_end;
+    unsigned char *value_start;
+    unsigned char *value_end;
 };
 
 static int ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c);
@@ -59,7 +59,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
         ch = *p;
 
         /* config file finished */
-        if (p >= (unsigned char *) buf->end)
+        if (p >= buf->end)
             return 3;
 
         switch (state) {
@@ -71,7 +71,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                     break;
                 }
 
-                c->field_start = (char *) p;
+                c->field_start = p;
                 state = sw_field;
 
                 /* fall through */
@@ -82,12 +82,12 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                     case '\t':  /* fall through */
                     case '\r':  /* fall through */
                     case '\n':  /* fall through */
-                        c->field_end = (char *) p;
+                        c->field_end = p;
                         state = sw_whitespace_after_field;
                         break;
 
                     case '=':
-                        c->field_end = (char *) p;
+                        c->field_end = p;
                         state = sw_whitespace_before_value;
                         break;
                 }
@@ -124,7 +124,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                         return -1;
 
                     default:
-                        c->value_start = (char *) p;
+                        c->value_start = p;
                         state = sw_value;
                         break;
                 }
@@ -137,12 +137,12 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                     case '\t':  /* fall through */
                     case '\r':  /* fall through */
                     case '\n':  /* fall through */
-                        c->value_end = (char *) p;
+                        c->value_end = p;
                         state = sw_whitespace_after_value;
                         break;
 
                     case ';':
-                        c->value_end = (char *) p;
+                        c->value_end = p;
                         goto done;
                 }
 
@@ -259,10 +259,10 @@ ovle_read_config(void)
             else if (strcmp(field, "token") == 0)
                 (void) ovle_strlcpy(token, value, sizeof token);
             else if (strncasecmp(field, "URL", sizeof "URL" - 1) == 0) {
-                (void) ovle_strlcpy(url, value, sizeof url);
-
-                if (ovle_http_parse_url(url, &u) == -1)
+                if (ovle_http_parse_url(value, &u) == -1)
                     goto failed;
+
+                (void) ovle_strlcpy(url, value, sizeof url);
             } else if (strcmp(field, "ip_address") == 0) {
                 if (inet_pton(AF_INET, value, &u.host_address) != 1)
                     goto failed;

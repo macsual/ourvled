@@ -10,10 +10,10 @@
 struct ovle_buf;
 
 struct ovle_http_parse_header {
-    char *field_start;
-    char *field_end;
-    char *value_start;
-    char *value_end;
+    unsigned char *field_start;
+    unsigned char *field_end;
+    unsigned char *value_start;
+    unsigned char *value_end;
 };
 
 /* RFC 1738 */

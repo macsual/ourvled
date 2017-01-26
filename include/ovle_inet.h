@@ -4,10 +4,10 @@
 #include <netinet/in.h>     /* struct in_addr, in_port_t */
 
 struct ovle_http_url {
-    char *host_start;
-    char *host_end;
-    char *port_start;
-    char *port_end;
+    unsigned char *host_start;
+    unsigned char *host_end;
+    unsigned char *port_start;
+    unsigned char *port_end;
     struct in_addr host_address;
     int https;
     in_port_t port;

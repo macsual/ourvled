@@ -6,10 +6,10 @@
 struct ovle_buf;
 
 struct json_parse {
-    char *name_start;
-    char *name_end;
-    char *value_start;
-    char *value_end;
+    unsigned char *name_start;
+    unsigned char *name_end;
+    unsigned char *value_start;
+    unsigned char *value_end;
 
     int state;
     int error;

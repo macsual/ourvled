@@ -384,7 +384,7 @@ int
 ovle_http_parse_url(const char *url, struct ovle_http_url *u)
 {
     unsigned char c, ch;
-    const unsigned char *p;
+    unsigned char *p;
     enum {
         sw_start,
         sw_scheme_h,
@@ -403,7 +403,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
 
     state = sw_start;
 
-    for (p = url; 1/* TODO */; p++) {
+    for (p = (unsigned char * ) url; 1/* TODO */; p++) {
         ch = *p;
 
         switch (state) {
@@ -526,7 +526,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 break;
 
             case sw_host_start:
-                u->host_start = (char *)p;
+                u->host_start = p;
                 state = sw_host;
 
                 /* fall through */
@@ -548,7 +548,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 /* fall through */
 
             case sw_host_end:
-                u->host_end = (char *)p;
+                u->host_end = p;
 
                 switch (ch) {
                     case ':':
@@ -565,8 +565,8 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         /* fall through */
 
                     case '/':
-                        u->port_start = (char *)p;
-                        u->port_end = (char *)p;
+                        u->port_start = p;
+                        u->port_end = p;
                         u->port = u->https ? 443 : 80; /* http port defaults */
                         goto done;
 
@@ -577,7 +577,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 break;
 
             case sw_port_start:
-                u->port_start = (char *)p;
+                u->port_start = p;
                 u->port = ch - '0';
                 state = sw_port;
 
@@ -600,7 +600,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 switch (ch) {
                     case '\0':  /* fall through */
                     case '/':
-                        u->port_end = (char *)p;
+                        u->port_end = p;
                         goto done;
 
                     default:
