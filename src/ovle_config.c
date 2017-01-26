@@ -35,10 +35,10 @@ struct ovle_parse {
     char *value_end;
 };
 
-static int ovle_parse_config_token(const char *buf, size_t len, struct ovle_parse *c);
+static int ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse *c);
 
 static int
-ovle_parse_config_token(const char *buf, size_t len, struct ovle_parse *c)
+ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse *c)
 {
     unsigned char ch;
     const unsigned char *p;
@@ -55,7 +55,7 @@ ovle_parse_config_token(const char *buf, size_t len, struct ovle_parse *c)
     for (p = buf; ; p++) {
         ch = *p;
 
-        if ((p - (unsigned char *) buf) >= len)
+        if (p >= (unsigned char *) buf_end)
             return 3;
 
         switch (state) {
@@ -190,7 +190,7 @@ ovle_read_config(void)
     p = buf;
 
     for (;;) {
-        rv = ovle_parse_config_token(p, file_size, &c);
+        rv = ovle_parse_config_token(p, buf + file_size, &c);
 
         if (rv == 3)
             break;
