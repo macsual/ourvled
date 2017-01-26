@@ -45,9 +45,10 @@ ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse 
     enum {
         sw_start,
         sw_field,
-        sw_space_after_field,
-        sw_space_before_value,
-        sw_value
+        sw_whitespace_after_field,
+        sw_whitespace_before_value,
+        sw_value,
+        sw_whitespace_after_value
     } state;
 
     state = sw_start;
@@ -61,47 +62,59 @@ ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse 
         switch (state) {
             /* first char */
             case sw_start:
+                if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n'
+                    || ch == ';')
+                {
+                    break;
+                }
+
                 c->field_start = (char *) p;
                 state = sw_field;
-                break;
+
+                /* fall through */
 
             case sw_field:
                 switch (ch) {
-                    case ' ':
+                    case ' ':   /* fall through */
+                    case '\t':  /* fall through */
+                    case '\r':  /* fall through */
+                    case '\n':  /* fall through */
                         c->field_end = (char *) p;
-                        state = sw_space_after_field;
+                        state = sw_whitespace_after_field;
                         break;
 
                     case '=':
                         c->field_end = (char *) p;
-                        state = sw_space_before_value;
+                        state = sw_whitespace_before_value;
                         break;
-
-                    case ';':
-                        return -1;
                 }
 
                 break;
 
-            case sw_space_after_field:
+            case sw_whitespace_after_field:
                 switch (ch) {
-                    case ' ':
+                    case ' ':   /* fall through */
+                    case '\t':  /* fall through */
+                    case '\r':  /* fall through */
+                    case '\n':  /* fall through */
                         break;
 
-                    case ';':
-                        return -1;
+                    case '=':
+                        state = sw_whitespace_before_value;
+                        break;
 
                     default:
-                        c->value_start = (char *) p;
-                        state = sw_value;
-                        break;
+                        return -1;
                 }
 
                 break;
 
-            case sw_space_before_value:
+            case sw_whitespace_before_value:
                 switch (ch) {
-                    case ' ':
+                    case ' ':   /* fall through */
+                    case '\t':  /* fall through */
+                    case '\r':  /* fall through */
+                    case '\n':  /* fall through */
                         break;
 
                     case ';':
@@ -117,9 +130,34 @@ ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse 
 
             case sw_value:
                 switch (ch) {
+                    case ' ':   /* fall through */
+                    case '\t':  /* fall through */
+                    case '\r':  /* fall through */
+                    case '\n':  /* fall through */
+                        c->value_end = (char *) p;
+                        state = sw_whitespace_after_value;
+                        break;
+
                     case ';':
                         c->value_end = (char *) p;
                         goto done;
+                }
+
+                break;
+
+            case sw_whitespace_after_value:
+                switch (ch) {
+                    case ' ':   /* fall through */
+                    case '\t':  /* fall through */
+                    case '\r':  /* fall through */
+                    case '\n':  /* fall through */
+                        break;
+
+                    case ';':
+                        goto done;
+
+                    default:
+                        return -1;
                 }
 
                 break;
@@ -224,7 +262,7 @@ ovle_read_config(void)
             }
         }
 
-        p = c.value_end + 2;
+        p = c.value_end + 1;
     }
 
     ovle_daemon_flag = 0;
