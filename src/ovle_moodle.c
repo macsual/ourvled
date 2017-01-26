@@ -90,7 +90,7 @@ ovle_moodle_get_token(int fd, char *token)
             break;
     }
 
-    if (ovle_json_parse_moodle_token(buf.pos, &j) == -1)
+    if (ovle_json_parse_moodle_token(&buf, &j) == -1)
         return -1;
 
     if (j.error)
@@ -167,11 +167,10 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
             break;
     }
 
-    j.buf_pos = buf.pos;
     j.state = 0;
 
     for (;;) {
-        rv = ovle_json_parse_object_member(&j);
+        rv = ovle_json_parse_object_member(&buf, &j);
 
         if (rv == -1)
             return -1;
@@ -283,11 +282,10 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
         }
     }
 
-    j.buf_pos = buf.pos;
     j.state = 0;
 
     for (;;) {
-        rv = ovle_json_parse_array_element(&j);
+        rv = ovle_json_parse_array_element(&buf, &j);
 
         if (rv == -1)
             return -1;
@@ -296,11 +294,10 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
             break;
 
         if (rv == 0) {
-            k.buf_pos = j.value_start;
             k.state = 0;
 
             for (;;) {
-                rv = ovle_json_parse_object_member(&k);
+                rv = ovle_json_parse_object_member(&buf, &k);
 
                 if (rv == -1)
                     return -1;

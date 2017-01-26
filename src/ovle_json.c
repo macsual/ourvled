@@ -4,10 +4,10 @@
 #include "ovle_json.h"
 
 int
-ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
+ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
 {
     unsigned char ch;
-    const unsigned char *p;
+    unsigned char *p;
     enum {
         sw_start,
         sw_name_lquot,
@@ -29,7 +29,7 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
 
     state = sw_start;
 
-    for (p = buf; /* TODO */; p++) {
+    for (p = b->pos; p < b->end; p++) {
         ch = *p;
 
         switch (state) {
@@ -203,7 +203,7 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
                 if (!isxdigit(ch))
                     return -1;
 
-                j->value_start = (char *)p;
+                j->value_start = p;
                 state = sw_value_token;
                 break;
 
@@ -213,7 +213,7 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
                     break;
 
                 if (ch == '"') {
-                    j->value_end = (char *)p;
+                    j->value_end = p;
                     state = sw_value_rquot;
                     break;
                 }
@@ -235,7 +235,7 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
 
             case sw_value_error_first_char:
                 /* TODO: validate string first char*/
-                j->value_start = (char *)p;
+                j->value_start = p;
                 state = sw_value_error;
                 break;
 
@@ -243,7 +243,7 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
                 /* TODO: validate string */
 
                 if (ch == '"') {
-                    j->value_end = (char *)p;
+                    j->value_end = p;
                     state = sw_comma;
                     break;
                 }
@@ -260,7 +260,6 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
                     case ',':
                         // state = sw_name_lquot;
                         goto done;
-                        break;
                 }
 
                 break;
@@ -268,6 +267,8 @@ ovle_json_parse_moodle_token(const char *buf, struct json_parse *j)
     }
 
 done:
+
+    b->pos = p + 1;
 
 #if 0
 
@@ -281,7 +282,7 @@ done:
 }
 
 int
-ovle_json_parse_object_member(struct json_parse *j)
+ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
 {
     int nest_level;
     unsigned char ch;
@@ -309,7 +310,7 @@ ovle_json_parse_object_member(struct json_parse *j)
 
     state = j->state;
 
-    for (p = j->buf_pos; *p; p++) {
+    for (p = b->pos; p < b->end; p++) {
         ch = *p;
 
         switch (state) {
@@ -582,20 +583,20 @@ ovle_json_parse_object_member(struct json_parse *j)
 
 done:
 
-    j->buf_pos = p + 1;
+    b->pos = p + 1;
     j->state = sw_name_lquot;
 
     return 0;
 
 member_done:
 
-    j->buf_pos = p + 1;
+    b->pos = p + 1;
 
     return 3;
 }
 
 int
-ovle_json_parse_array_element(struct json_parse *j)
+ovle_json_parse_array_element(struct ovle_buf *b, struct json_parse *j)
 {
     int count;
     unsigned char ch;
@@ -613,7 +614,7 @@ ovle_json_parse_array_element(struct json_parse *j)
 
     state = j->state;
 
-    for (p = j->buf_pos; *p; p++) {
+    for (p = b->pos; p < b->end; p++) {
         ch = *p;
 
         switch (state) {
@@ -722,14 +723,14 @@ ovle_json_parse_array_element(struct json_parse *j)
 
 done:
 
-    j->buf_pos = p + 1;
+    b->pos = p + 1;
     j->state = sw_space_before_value;
 
     return 0;
 
 element_done:
 
-    j->buf_pos = p + 1;
+    b->pos = p + 1;
 
     return 3;
 }
