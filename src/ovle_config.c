@@ -259,10 +259,10 @@ ovle_read_config(void)
             else if (strcmp(field, "token") == 0)
                 (void) ovle_strlcpy(token, value, sizeof token);
             else if (strncasecmp(field, "URL", sizeof "URL" - 1) == 0) {
-                if (ovle_http_parse_url(value, &u) == -1)
-                    goto failed;
-
                 (void) ovle_strlcpy(url, value, sizeof url);
+
+                if (ovle_http_parse_url(url, &u) == -1)
+                    goto failed;
             } else if (strcmp(field, "ip_address") == 0) {
                 if (inet_pton(AF_INET, value, &u.host_address) != 1)
                     goto failed;
