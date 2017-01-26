@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <stdint.h>     /* UINT16_MAX */
 
+#include "ovle_config.h"
 #include "ovle_http.h"
 
 #define CR      '\r'
@@ -8,10 +9,10 @@
 #define CRLF    "\r\n"
 
 int
-ovle_http_parse_status_line(char *buf, char **ptr, int *statuscode)
+ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
 {
-    int ch;
-    char *p;
+    unsigned char ch;
+    unsigned char *p;
     enum {
         sw_start,
         sw_H,
@@ -32,7 +33,7 @@ ovle_http_parse_status_line(char *buf, char **ptr, int *statuscode)
 
     state = sw_start;
 
-    for (p = buf; p; p++) {
+    for (p = b->pos; p < b->end; p++) {
         ch = *p;
 
         switch (state) {
@@ -207,13 +208,13 @@ ovle_http_parse_status_line(char *buf, char **ptr, int *statuscode)
 
 done:
 
-    *ptr = p + 1;
+    b->pos = p + 1;
 
     return 0;
 }
 
 int
-ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
+ovle_http_parse_header_line(struct ovle_buf *b, struct ovle_http_parse_header *h)
 {
     unsigned char ch;
     unsigned char *p;
@@ -229,7 +230,7 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
 
     state = sw_start;
 
-    for (p = buf; p; p++) {
+    for (p = b->pos; p < b->end; p++) {
         ch = *p;
 
         switch (state) {
@@ -248,12 +249,9 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
 
                     default:
                         state = sw_name;
-
-                        if (ch == '\0')
-                            return -1;
-
                         break;
                 }
+
                 break;
 
             case sw_name:
@@ -278,9 +276,6 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
                     goto done;
                 }
 
-                if (ch == '\0')
-                    return -1;
-
                 break;
 
             case sw_space_before_value:
@@ -299,14 +294,12 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
                         h->value_end = p;
                         goto done;
 
-                    case '\0':
-                        return -1;
-
                     default:
                         h->value_start = p;
                         state = sw_value;
                         break;
                 }
+
                 break;
 
             case sw_value:
@@ -324,10 +317,8 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
                     case LF:
                         h->value_end = p;
                         goto done;
-
-                    case '\0':
-                        return -1;
                 }
+
                 break;
 
             /* space* before end of header line */
@@ -343,13 +334,11 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
                     case LF:
                         goto done;
 
-                    case '\0':
-                        return -1;
-
                     default:
                         state = sw_value;
                         break;
                 }
+
                 break;
 
             /* end of header line */
@@ -379,9 +368,14 @@ ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h)
     }
 
 done:
+
+    b->pos = p + 1;
+
     return 0;
 
 header_done:
+
+    b->pos = p + 1;
 
     return 3;
 }

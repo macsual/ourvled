@@ -35,13 +35,13 @@ struct ovle_parse {
     char *value_end;
 };
 
-static int ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse *c);
+static int ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c);
 
 static int
-ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse *c)
+ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
 {
     unsigned char ch;
-    const unsigned char *p;
+    unsigned char *p;
     enum {
         sw_start,
         sw_field,
@@ -53,10 +53,11 @@ ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse 
 
     state = sw_start;
 
-    for (p = buf; ; p++) {
+    for (p = buf->pos; /* void */; p++) {
         ch = *p;
 
-        if (p >= (unsigned char *) buf_end)
+        /* config file finished */
+        if (p >= (unsigned char *) buf->end)
             return 3;
 
         switch (state) {
@@ -166,6 +167,8 @@ ovle_parse_config_token(const char *buf, const char *buf_end, struct ovle_parse 
 
 done:
 
+    buf->pos = p + 1;
+
     return 0;
 }
 
@@ -174,16 +177,16 @@ ovle_read_config(void)
 {
     int fd;
     int rv;
-    char *p;
     off_t file_size;
     ssize_t bytes;
     size_t field_len, val_len;
     char *field, *value;
     char buf[BUFSIZ];
-    struct ovle_parse c;
     char *home_path;
     char conf_file_path[PATH_MAX];
     struct stat file_info;
+    struct ovle_buf b;
+    struct ovle_parse c;
 
     home_path = getenv("HOME");
     if (home_path == NULL)
@@ -221,10 +224,12 @@ ovle_read_config(void)
         goto failed;
     }
 
-    p = buf;
+    b.start = buf;
+    b.pos = buf;
+    b.end = buf + file_size;
 
     for (;;) {
-        rv = ovle_parse_config_token(p, buf + file_size, &c);
+        rv = ovle_parse_config_token(&b, &c);
 
         if (rv == 3)
             break;
@@ -261,8 +266,6 @@ ovle_read_config(void)
                     goto failed;
             }
         }
-
-        p = c.value_end + 1;
     }
 
     ovle_daemon_flag = 0;

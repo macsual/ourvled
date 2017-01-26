@@ -22,6 +22,12 @@
  */
 #define OVLE_HTTP_URL_MAX   HOST_NAME_MAX + (sizeof "https://:65535/" - 1)
 
+struct ovle_buf {
+    unsigned char *start;
+    unsigned char *pos;
+    unsigned char *end;
+};
+
 extern int ovle_daemon_flag;
 extern char url[OVLE_HTTP_URL_MAX];
 extern struct ovle_http_url u;

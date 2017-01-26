@@ -19,12 +19,12 @@ int
 ovle_moodle_get_token(int fd, char *token)
 {
     int rv;
-    char *p;
     int statuscode;
     ssize_t bytes;
     int http_request_len, http_body_len, host_len;
     char http_request[BUFSIZ], http_request_body[128];
     char http_response[BUFSIZ];
+    struct ovle_buf buf;
     struct json_parse j;
     struct ovle_http_parse_header h;
     char host[HOST_NAME_MAX];
@@ -70,29 +70,27 @@ ovle_moodle_get_token(int fd, char *token)
         return -1;
     }
 
-    http_response[bytes] = '\0';
+    buf.start = http_response;
+    buf.pos = http_response;
+    buf.end = http_response + bytes;
 
-    if (ovle_http_parse_status_line(http_response, &p, &statuscode) == -1)
+    if (ovle_http_parse_status_line(&buf, &statuscode) == -1)
         return -1;
 
     if (statuscode != 200)
         return -1;
 
     for (;;) {
-        rv = ovle_http_parse_header_line(p, &h);
+        rv = ovle_http_parse_header_line(&buf, &h);
 
         if (rv == -1)
             return -1;
 
-        if (rv == 3) {
-            p += 2;
+        if (rv == 3)
             break;
-        }
-
-        p = h.value_end + 2;
     }
 
-    if (ovle_json_parse_moodle_token(p, &j) == -1)
+    if (ovle_json_parse_moodle_token(buf.pos, &j) == -1)
         return -1;
 
     if (j.error)
@@ -108,7 +106,6 @@ int
 ovle_get_moodle_userid(int fd, const char *token, char *userid)
 {
     int rv;
-    char *p;
     int statuscode;
     ssize_t bytes;
     int http_request_len;
@@ -116,6 +113,7 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
     char *name, *value;
     char http_request[BUFSIZ];
     char http_response[BUFSIZ];
+    struct ovle_buf buf;
     struct json_parse j;
     struct ovle_http_parse_header h;
     char host[HOST_NAME_MAX];
@@ -149,29 +147,27 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
         return -1;
     }
 
-    http_response[bytes] = '\0';
+    buf.start = http_response;
+    buf.pos = http_response;
+    buf.end = http_response + bytes;
 
-    if (ovle_http_parse_status_line(http_response, &p, &statuscode) == -1)
+    if (ovle_http_parse_status_line(&buf, &statuscode) == -1)
         return -1;
 
     if (statuscode != 200)
         return -1;
 
     for (;;) {
-        rv = ovle_http_parse_header_line(p, &h);
+        rv = ovle_http_parse_header_line(&buf, &h);
 
         if (rv == -1)
             return -1;
 
-        if (rv == 3) {
-            p += 2;
+        if (rv == 3)
             break;
-        }
-
-        p = h.value_end + 2;
     }
 
-    j.buf_pos = p;
+    j.buf_pos = buf.pos;
     j.state = 0;
 
     for (;;) {
@@ -214,7 +210,6 @@ int
 ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
 {
     int rv;
-    char *p;
     int statuscode;
     int file_fd;
     int http_request_len;
@@ -226,6 +221,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
     char *name, *field, *value;
     char *id, *shortname;
     struct ovle_http_parse_header h;
+    struct ovle_buf buf;
     struct json_parse j, k;
     char host[HOST_NAME_MAX];
 
@@ -258,21 +254,21 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
         return -1;
     }
 
-    http_response[bytes] = '\0';
+    buf.start = http_response;
+    buf.pos = http_response;
+    buf.end = http_response + bytes;
 
-    if (ovle_http_parse_status_line(http_response, &p, &statuscode) == -1)
+    if (ovle_http_parse_status_line(&buf, &statuscode) == -1)
         return -1;
 
     if (statuscode != 200)
         return -1;
 
     for (;;) {
-        rv = ovle_http_parse_header_line(p, &h);
+        rv = ovle_http_parse_header_line(&buf, &h);
 
-        if (rv == 3) {
-            p += 2;
+        if (rv == 3)
             break;
-        }
 
         if (rv == 0) {
             field_len = h.field_end - h.field_start;
@@ -285,11 +281,9 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
 
             ovle_log_debug2("header %s: %s", field, value);
         }
-
-        p = h.value_end + 2;
     }
 
-    j.buf_pos = p;
+    j.buf_pos = buf.pos;
     j.state = 0;
 
     for (;;) {
@@ -369,10 +363,6 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
                 fprintf(stderr, "HTTP response too large\n");
                 return -1;
             }
-
-            response2[bytes] = '\0';
-
-            
 
             // send(sockfd, request, len, MSG_NOSIGNAL);
 
