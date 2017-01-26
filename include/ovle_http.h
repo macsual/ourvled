@@ -16,7 +16,7 @@ struct ovle_http_parse_header {
 
 /* RFC 1738 */
 extern int ovle_http_parse_url(const char *url, struct ovle_http_url *u);
-extern int ovle_http_parse_status_line(char *buf, char **p);
+extern int ovle_http_parse_status_line(char *buf, char **p, int *statuscode);
 extern int ovle_http_parse_header_line(char *buf, struct ovle_http_parse_header *h);
 
 #endif  /* OVLE_HTTP_H */

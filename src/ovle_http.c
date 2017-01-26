@@ -8,9 +8,8 @@
 #define CRLF    "\r\n"
 
 int
-ovle_http_parse_status_line(char *buf, char **ptr)
+ovle_http_parse_status_line(char *buf, char **ptr, int *statuscode)
 {
-    int count = 0;
     int ch;
     char *p;
     enum {
@@ -23,7 +22,9 @@ ovle_http_parse_status_line(char *buf, char **ptr)
         sw_major_digit,
         sw_first_minor_digit,
         sw_minor_digit,
-        sw_status,
+        sw_status_first_digit,
+        sw_status_second_digit,
+        sw_status_third_digit,
         sw_space_after_status,
         sw_status_text,
         sw_almost_done
@@ -123,7 +124,7 @@ ovle_http_parse_status_line(char *buf, char **ptr)
             /* the minor HTTP version or the end of the request line */
             case sw_minor_digit:
                 if (ch == ' ') {
-                    state = sw_status;
+                    state = sw_status_first_digit;
                     break;
                 }
 
@@ -133,16 +134,32 @@ ovle_http_parse_status_line(char *buf, char **ptr)
                 break;
 
             /* HTTP status code */
-            case sw_status:
-                if (ch == ' ')
-                    break;
 
+            case sw_status_first_digit:
                 if (ch < '0' || ch > '9')
                     return -1;
 
-                if (++count == 3)
-                    state = sw_space_after_status;
+                *statuscode = ch - '0';
 
+                state = sw_status_second_digit;
+                break;
+
+            case sw_status_second_digit:
+                if (ch < '0' || ch > '9')
+                    return -1;
+
+                *statuscode = *statuscode * 10 + ch - '0';
+
+                state = sw_status_third_digit;
+                break;
+
+            case sw_status_third_digit:
+                if (ch < '0' || ch > '9')
+                    return -1;
+
+                *statuscode = *statuscode * 10 + ch - '0';
+
+                state = sw_space_after_status;
                 break;
 
             /* space or end of line */

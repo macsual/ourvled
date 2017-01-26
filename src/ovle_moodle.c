@@ -20,6 +20,7 @@ ovle_moodle_get_token(int fd, char *token)
 {
     int rv;
     char *p;
+    int statuscode;
     ssize_t bytes;
     int http_request_len, http_body_len, host_len;
     char http_request[BUFSIZ], http_request_body[128];
@@ -71,7 +72,10 @@ ovle_moodle_get_token(int fd, char *token)
 
     http_response[bytes] = '\0';
 
-    if (ovle_http_parse_status_line(http_response, &p) == -1)
+    if (ovle_http_parse_status_line(http_response, &p, &statuscode) == -1)
+        return -1;
+
+    if (statuscode != 200)
         return -1;
 
     for (;;) {
@@ -105,6 +109,7 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
 {
     int rv;
     char *p;
+    int statuscode;
     ssize_t bytes;
     int http_request_len;
     size_t name_len, val_len, host_len;
@@ -146,7 +151,10 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
 
     http_response[bytes] = '\0';
 
-    if (ovle_http_parse_status_line(http_response, &p) == -1)
+    if (ovle_http_parse_status_line(http_response, &p, &statuscode) == -1)
+        return -1;
+
+    if (statuscode != 200)
         return -1;
 
     for (;;) {
@@ -207,6 +215,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
 {
     int rv;
     char *p;
+    int statuscode;
     int file_fd;
     int http_request_len;
     char http_request[BUFSIZ];
@@ -251,7 +260,10 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
 
     http_response[bytes] = '\0';
 
-    if (ovle_http_parse_status_line(http_response, &p) == -1)
+    if (ovle_http_parse_status_line(http_response, &p, &statuscode) == -1)
+        return -1;
+
+    if (statuscode != 200)
         return -1;
 
     for (;;) {
