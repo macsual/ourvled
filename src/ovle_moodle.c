@@ -65,7 +65,7 @@ ovle_moodle_get_token(int fd, char *token)
     if (bytes == 0)
         return -1;
 
-    if (bytes > sizeof http_response - 1) {
+    if (bytes > sizeof http_response) {
         fprintf(stderr, "HTTP response too large\n");
         return -1;
     }
@@ -142,7 +142,7 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
     if (bytes == 0)
         return -1;
 
-    if (bytes > sizeof http_response - 1) {
+    if (bytes > sizeof http_response) {
         fprintf(stderr, "HTTP response too large\n");
         return -1;
     }
@@ -248,7 +248,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
     if (bytes == 0)
         return -1;
 
-    if (bytes > sizeof http_response - 1) {
+    if (bytes > sizeof http_response) {
         fprintf(stderr, "HTTP response too large\n");
         return -1;
     }
@@ -356,7 +356,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
             if (bytes == 0)
                 return -1;
 
-            if (bytes > sizeof response2 - 1) {
+            if (bytes > sizeof response2) {
                 fprintf(stderr, "HTTP response too large\n");
                 return -1;
             }
