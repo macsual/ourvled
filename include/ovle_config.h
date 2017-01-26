@@ -28,6 +28,7 @@ struct ovle_buf {
     unsigned char *end;
 };
 
+extern int ip_addr_set;
 extern int ovle_daemon_flag;
 extern char url[OVLE_HTTP_URL_MAX];
 extern struct ovle_http_url u;

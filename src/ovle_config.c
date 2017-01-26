@@ -19,6 +19,8 @@
 #include "ovle_log.h"
 #include "ovle_string.h"    /* ovle_strlcpy() */
 
+int ip_addr_set;
+
 int ovle_daemon_flag;
 
 char url[OVLE_HTTP_URL_MAX];
@@ -264,6 +266,8 @@ ovle_read_config(void)
             } else if (strcmp(field, "ip_address") == 0) {
                 if (inet_pton(AF_INET, value, &u.host_address) != 1)
                     goto failed;
+
+                ip_addr_set = 1;
             }
         }
     }

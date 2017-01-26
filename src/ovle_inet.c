@@ -29,7 +29,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
     struct addrinfo *p, *servinfo;
     struct sockaddr_in addr;
 
-    if (1 /* TODO */) {
+    if (ip_addr_set) {
         addr.sin_family = AF_INET;  /* OurVLE doesn't support IPv6 */
         addr.sin_addr = u->host_address;
         addr.sin_port = htons(u->port);
