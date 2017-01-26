@@ -161,30 +161,26 @@ ovle_read_config(void)
 
     if (fstat(fd, &file_info) == -1) {
         fprintf(stderr, "fstat() \"%s\" failed\n", conf_file_path);
-        return -1;
+        goto failed;
     }
 
     file_size = file_info.st_size;
 
     if (file_size > sizeof buf) {
         fprintf(stderr, "config file too large\n");
-        return -1;
+        goto failed;
     }
 
     bytes = read(fd, buf, sizeof buf);
 
     if (bytes == -1) {
         fprintf(stderr, "read() failed");
-
-        if (close(fd) == -1)
-            fprintf(stderr, "close() failed");
-
-        return -1;
+        goto failed;
     }
 
     if (bytes != file_size) {
         fprintf(stderr, "read() returned only %ld of %ld bytes\n", bytes, file_size);
-        return -1;
+        goto failed;
     }
 
     p = buf;
@@ -196,7 +192,7 @@ ovle_read_config(void)
             break;
 
         if (rv == -1)
-            return -1;
+            goto failed;
 
         if (rv == 0) {
             field_len = c.field_end - c.field_start;
@@ -221,10 +217,10 @@ ovle_read_config(void)
                 (void) ovle_strlcpy(url, value, sizeof url);
 
                 if (ovle_http_parse_url(url, &u) == -1)
-                    return -1;
+                    goto failed;
             } else if (strcmp(field, "ip_address") == 0) {
                 if (inet_pton(AF_INET, value, &u.host_address) != 1)
-                    return -1;
+                    goto failed;
             }
         }
 
@@ -237,4 +233,11 @@ ovle_read_config(void)
         fprintf(stderr, "close() failed\n");
 
     return 0;
+
+failed:
+
+    if (close(fd) == -1)
+        fprintf(stderr, "close() failed\n");
+
+    return -1;
 }
