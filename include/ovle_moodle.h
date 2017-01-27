@@ -1,6 +1,9 @@
 #ifndef OVLE_MOODLE_H
 #define OVLE_MOODLE_H
 
+/* Moodle mobile app service name */
+#define MOODLE_OFFICIAL_MOBILE_SERVICE     "moodle_mobile_app"
+
 /*
  * A Moodle user token for web services is generated in PHP by calling md5()
  * without the raw_output parameter which returns the hash formatted as a
