@@ -25,10 +25,10 @@ int ovle_daemon_flag;
 
 char url[OVLE_HTTP_URL_MAX];
 struct ovle_http_url u;
-char username[OVLE_UWI_STU_ID_LEN + 1];
-char password[100];
+char username[MDL_USERNAME_MAX + 1];
+char password[MDL_PASSWORD_MAX + 1];
 char token[OVLE_MD5_HASH_LEN + 1];
-char service[OVLE_MOODLE_SERVICE_NAME_LEN + 1];
+char service[MDL_SERVICE_SHORTNAME_MAX + 1];
 
 struct ovle_parse {
     unsigned char *field_start;

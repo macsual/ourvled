@@ -32,10 +32,10 @@ extern int ip_addr_set;
 extern int ovle_daemon_flag;
 extern char url[OVLE_HTTP_URL_MAX];
 extern struct ovle_http_url u;
-extern char username[OVLE_UWI_STU_ID_LEN + 1];          /* UWI Student ID # */
-extern char password[100];
+extern char username[MDL_USERNAME_MAX + 1];
+extern char password[MDL_PASSWORD_MAX + 1];
 extern char token[OVLE_MD5_HASH_LEN + 1];
-extern char service[OVLE_MOODLE_SERVICE_NAME_LEN + 1];
+extern char service[MDL_SERVICE_SHORTNAME_MAX + 1];
 
 extern int ovle_read_config(void);
 

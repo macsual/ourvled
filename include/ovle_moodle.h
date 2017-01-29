@@ -2,7 +2,7 @@
 #define OVLE_MOODLE_H
 
 /* Moodle mobile app service name */
-#define MOODLE_OFFICIAL_MOBILE_SERVICE     "moodle_mobile_app"
+#define MOODLE_OFFICIAL_MOBILE_SERVICE  "moodle_mobile_app"
 
 /*
  * A Moodle user token for web services is generated in PHP by calling md5()
@@ -16,11 +16,26 @@
  */
 #define OVLE_MD5_HASH_LEN               32
 
-/* Moodle Mobile web service shortname */
-#define OVLE_MOODLE_SERVICE_NAME_LEN    (sizeof "moodle_mobile_app" - 1)
+/*
+ * Maximum length of a Moodle external service's shortname (not including the
+ * terminating null) as defined by the length property of the column shortname
+ * in the external_services table in Moodle's database.
+ */
+#define MDL_SERVICE_SHORTNAME_MAX       255
 
-/* new UWI student ID # scheme */
-#define OVLE_UWI_STU_ID_LEN             (sizeof "6200xxxxx" - 1)
+/*
+ * Maximum length of a Moodle username (not including the terminating null) as
+ * defined by the length property of the column username in the user table in
+ * Moodle's database.
+ */
+#define MDL_USERNAME_MAX                100
+
+/*
+ * Maximum length of a Moodle user's password (not including the terminating
+ * null) as defined by the length property of the column password in the user
+ * table in Moodle's database.
+ */
+#define MDL_PASSWORD_MAX                255
 
 
 /*
