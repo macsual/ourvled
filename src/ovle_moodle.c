@@ -27,7 +27,7 @@ ovle_moodle_get_token(int fd, char *token)
     struct ovle_buf buf;
     struct json_parse j;
     struct ovle_http_parse_header h;
-    char host[HOST_NAME_MAX];
+    char host[HOST_NAME_MAX + 1];
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);
@@ -116,7 +116,7 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
     struct ovle_buf buf;
     struct json_parse j;
     struct ovle_http_parse_header h;
-    char host[HOST_NAME_MAX];
+    char host[HOST_NAME_MAX + 1];
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);
@@ -222,7 +222,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
     struct ovle_http_parse_header h;
     struct ovle_buf buf;
     struct json_parse j, k;
-    char host[HOST_NAME_MAX];
+    char host[HOST_NAME_MAX + 1];
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);

@@ -24,7 +24,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
     int fd;
     const int tcp_nodelay = 1;
     size_t host_len;
-    char host[HOST_NAME_MAX];
+    char host[HOST_NAME_MAX + 1];
     struct addrinfo hints;
     struct addrinfo *p, *servinfo;
     struct sockaddr_in addr;
