@@ -23,7 +23,7 @@ int ip_addr_set;
 
 int ovle_daemon_flag;
 
-char url[OVLE_HTTP_URL_MAX];
+char url[OVLE_HTTP_URL_MAX + 1];
 struct ovle_http_url u;
 char username[MDL_USERNAME_MAX + 1];
 char password[MDL_PASSWORD_MAX + 1];
