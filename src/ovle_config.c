@@ -254,7 +254,7 @@ ovle_read_config(void)
                 (void) ovle_strlcpy(username, value, sizeof username);
             else if (strcmp(field, "password") == 0)
                 (void) ovle_strlcpy(password, value, sizeof password);
-            else if (strcmp(field, "service_shortname") == 0)
+            else if (strcmp(field, "service") == 0)
                 (void) ovle_strlcpy(service, value, sizeof service);
             else if (strcmp(field, "token") == 0)
                 (void) ovle_strlcpy(token, value, sizeof token);
