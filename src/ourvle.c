@@ -186,14 +186,10 @@ main(int argc, char *argv[])
             return 1;
         }
 
-        ovle_log_debug1("Moodle user token %s", token);
-
         if (ovle_get_moodle_userid(ourvle_fd, token, userid) == -1) {
             fprintf(stderr, "failed to get Moodle userid\n");
             return 1;
         }
-
-        ovle_log_debug1("Moodle userid %s", userid);
 
         if (ovle_sync_moodle_content(ourvle_fd, token, userid) == -1) {
             fprintf(stderr, "failed to sync Moodle course content\n");

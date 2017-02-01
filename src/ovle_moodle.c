@@ -99,6 +99,8 @@ ovle_moodle_get_token(int fd, char *token)
     (void) memcpy(token, j.value_start, OVLE_MD5_HASH_LEN);
     token[OVLE_MD5_HASH_LEN] = '\0';
 
+    ovle_log_debug1("Moodle user token %s", token);
+
     return 0;
 }
 
@@ -201,6 +203,8 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
             }
         }
     }
+
+    ovle_log_debug1("Moodle userid %s", userid);
 
     return 0;
 }
