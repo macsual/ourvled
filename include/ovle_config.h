@@ -6,7 +6,7 @@
 #include "ovle_http.h"
 #include "ovle_moodle.h"
 
-/* use smallest signed 64 bit long because of the minus sign */
+#define OVLE_INT32_LEN  (sizeof "-2147483648" - 1)
 #define INT64_LEN   (sizeof "-9223372036854775808" - 1)
 #define UINT16_LEN  (sizeof "65535" - 1)
 
