@@ -74,8 +74,13 @@ ovle_mdl_get_token(int fd, char *token)
     if (ovle_json_parse_moodle_token(&buf, &j) == -1)
         return OVLE_ERROR;
 
-    if (j.error)
+    if (j.error) {
+        j.error_start[j.error_end - j.error_start] = '\0';
+
+        fprintf(stderr, "error: %s\n", j.error_start);
+
         return OVLE_ERROR;
+    }
 
     (void) memcpy(token, j.value_start, OVLE_MD5_HASH_LEN);
     token[OVLE_MD5_HASH_LEN] = '\0';

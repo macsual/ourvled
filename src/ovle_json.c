@@ -234,8 +234,8 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                 break;
 
             case sw_value_error_first_char:
-                /* TODO: validate string first char*/
-                j->value_start = p;
+                /* TODO: validate string first char */
+                j->error_start = p;
                 state = sw_value_error;
                 break;
 
@@ -243,7 +243,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                 /* TODO: validate string */
 
                 if (ch == '"') {
-                    j->value_end = p;
+                    j->error_end = p;
                     state = sw_comma;
                     break;
                 }

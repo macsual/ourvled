@@ -11,6 +11,9 @@ struct json_parse {
     unsigned char *value_start;
     unsigned char *value_end;
 
+    unsigned char *error_start;
+    unsigned char *error_end;
+
     int state;
     int error;
 };
