@@ -10,6 +10,10 @@
 #define INT64_LEN   (sizeof "-9223372036854775808" - 1)
 #define UINT16_LEN  (sizeof "65535" - 1)
 
+#define OVLE_OK      0
+#define OVLE_ERROR  -1
+#define OVLE_AGAIN  -2
+
 /*
  * Maximum length of a HTTP URL (without path data) not including the
  * terminating null.
@@ -22,9 +26,13 @@
 #define OVLE_HTTP_URL_MAX   HOST_NAME_MAX + (sizeof "https://:65535/" - 1)
 
 struct ovle_buf {
-    unsigned char *start;
     unsigned char *pos;
+    unsigned char *last;
+
+    unsigned char *start;
     unsigned char *end;
+
+    int state;
 };
 
 extern int ip_addr_set;

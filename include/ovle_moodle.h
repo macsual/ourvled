@@ -46,7 +46,7 @@
  * string representation of a md5 hash, which is 32 bytes.  The Moodle user
  * token value will be copied to the buffer token points to upon success.
  */
-extern int ovle_moodle_get_token(int sockfd, char *token);
+extern int ovle_mdl_get_token(int sockfd, char *token);
 
 /*
  * Get Moodle userid ASCII representation
@@ -63,7 +63,7 @@ extern int ovle_moodle_get_token(int sockfd, char *token);
  * when the Moodle userid is used as an argument to another web service
  * function call.
  */
-extern int ovle_get_moodle_userid(int fd, const char *token, char *userid);
+extern int ovle_mdl_get_userid(int fd, const char *token, char *userid);
 
 
 /*
@@ -73,6 +73,6 @@ extern int ovle_get_moodle_userid(int fd, const char *token, char *userid);
  * function call.  userid points to a buffer that stores a C string that
  * represents the ASCII representation of a Moodle userid.
  */
-extern int ovle_sync_moodle_content(int fd, const char *token, const char *userid);
+extern int ovle_mdl_sync_course_content(int fd, const char *token, const char *userid);
 
 #endif  /* OVLE_MOODLE_H */

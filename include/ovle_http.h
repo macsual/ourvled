@@ -16,6 +16,9 @@ struct ovle_http_parse_header {
     unsigned char *value_end;
 };
 
+extern int ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode);
+extern int ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_length);
+
 /* RFC 1738 */
 extern int ovle_http_parse_url(const char *url, struct ovle_http_url *u);
 extern int ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode);

@@ -199,7 +199,7 @@ ovle_read_config(void)
     fd = open(conf_file_path, O_RDONLY);
     if (fd == -1) {
         fprintf(stderr, "open() \"%s\" failed\n", conf_file_path);
-        return -1;
+        return OVLE_ERROR;
     }
 
     if (fstat(fd, &file_info) == -1) {
@@ -233,13 +233,7 @@ ovle_read_config(void)
     for (;;) {
         rv = ovle_parse_config_token(&b, &c);
 
-        if (rv == 3)
-            break;
-
-        if (rv == -1)
-            goto failed;
-
-        if (rv == 0) {
+        if (rv == OVLE_OK) {
             field_len = c.field_end - c.field_start;
             field = c.field_start;
             field[field_len] = '\0';
@@ -270,6 +264,12 @@ ovle_read_config(void)
                 ip_addr_set = 1;
             }
         }
+
+        if (rv == 3)
+            break;
+
+        if (rv == OVLE_ERROR)
+            goto failed;
     }
 
     ovle_daemon_flag = 0;
@@ -277,12 +277,12 @@ ovle_read_config(void)
     if (close(fd) == -1)
         fprintf(stderr, "close() failed\n");
 
-    return 0;
+    return OVLE_OK;
 
 failed:
 
     if (close(fd) == -1)
         fprintf(stderr, "close() failed\n");
 
-    return -1;
+    return OVLE_ERROR;
 }

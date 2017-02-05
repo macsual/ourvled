@@ -54,29 +54,29 @@ ovle_get_options(int argc, char *argv[])
                 if (long_options[opt_index].flag
                         && (ovle_show_help || ovle_show_version))
                 {
-                    return 0;
+                    return OVLE_OK;
                 }
 
                 break;
 
             case 'h':
                 ovle_show_help = 1;
-                return 0;
+                return OVLE_OK;
 
             case 'v':   /* fall through */
             case 'V':
                 ovle_show_version = 1;
-                return 0;
+                return OVLE_OK;
 
             case '?':
-                return -1;
+                return OVLE_ERROR;
 
             default:
                 abort();
         }
     }
 
-    return 0;
+    return OVLE_OK;
 }
 
 static void
@@ -115,7 +115,7 @@ ovle_create_pidfile(const char *name)
     fd = open(name, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
         fprintf(stderr, "open() of \"%s\" failed\n", name);
-        return -1;
+        return OVLE_ERROR;
     }
 
     /*
@@ -129,13 +129,13 @@ ovle_create_pidfile(const char *name)
         if (close(fd) == -1)
             fprintf(stderr, "close() on \"%s\" failed\n", name);
 
-        return -1;
+        return OVLE_ERROR;
     }
 
     if (close(fd) == -1)
         fprintf(stderr, "close() on \"%s\" failed\n", name);
 
-    return 0;
+    return OVLE_OK;
 }
 
 int
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
     int ourvle_fd;
     char userid[INT64_LEN + 1];
 
-    if (ovle_get_options(argc, argv) == -1)
+    if (ovle_get_options(argc, argv) == OVLE_ERROR)
         return 0;
 
     if (ovle_show_version) {
@@ -159,11 +159,11 @@ main(int argc, char *argv[])
 
     ovle_pid = getpid();
 
-    if (ovle_read_config() == -1)
+    if (ovle_read_config() == OVLE_ERROR)
         return 1;
 
     if (ovle_daemon_flag) {
-        if (ovle_daemon() == -1)
+        if (ovle_daemon() == OVLE_ERROR)
             return 1;
     }
 
@@ -171,27 +171,27 @@ main(int argc, char *argv[])
      * we do not create the pid file until after daemonising because we need to
      * write the demonised process pid
      */
-    if (ovle_create_pidfile("ourvle.pid") == -1)
+    if (ovle_create_pidfile("ourvle.pid") == OVLE_ERROR)
         return 1;
 
     for (;;) {
         ourvle_fd = ovle_http_open_connection(&u);
-        if (ourvle_fd == -1) {
+        if (ourvle_fd == OVLE_ERROR) {
             fprintf(stderr, "failed to open HTTP connection\n");
             return 1;
         }
 
-        if (ovle_moodle_get_token(ourvle_fd, token) == -1) {
+        if (ovle_mdl_get_token(ourvle_fd, token) == OVLE_ERROR) {
             fprintf(stderr, "failed to get Moodle user token\n");
             return 1;
         }
 
-        if (ovle_get_moodle_userid(ourvle_fd, token, userid) == -1) {
+        if (ovle_mdl_get_userid(ourvle_fd, token, userid) == OVLE_ERROR) {
             fprintf(stderr, "failed to get Moodle userid\n");
             return 1;
         }
 
-        if (ovle_sync_moodle_content(ourvle_fd, token, userid) == -1) {
+        if (ovle_mdl_sync_course_content(ourvle_fd, token, userid) == OVLE_ERROR) {
             fprintf(stderr, "failed to sync Moodle course content\n");
             return 1;
         }

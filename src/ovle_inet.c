@@ -42,7 +42,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
 
         if (fd == -1) {
             fprintf(stderr, "socket() failed\n");
-            return -1;
+            return OVLE_ERROR;
         }
 
         if (connect(fd, (struct sockaddr *) &addr, sizeof addr) == -1) {
@@ -51,7 +51,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
 
             fprintf(stderr, "connect() failed\n");
 
-            return -1;
+            return OVLE_ERROR;
         }
     } else {
         (void) memset(&hints, 0, sizeof (struct addrinfo));
@@ -70,7 +70,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
         /* pass NULL to avoid service name resolution */
         if (getaddrinfo(host, NULL, &hints, &servinfo) != 0) {
             fprintf(stderr, "getaddrinfo() failed\n");
-            return -1;
+            return OVLE_ERROR;
         }
 
         for (p = servinfo; p; p = p->ai_next) {
@@ -109,7 +109,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
                 fprintf(stderr, "close() failed\n");
 
             freeaddrinfo(servinfo);
-            return -1;
+            return OVLE_ERROR;
         }
 
         freeaddrinfo(servinfo);
@@ -126,7 +126,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
         if (close(fd) == -1)
             fprintf(stderr, "close() failed\n");
 
-        return -1;
+        return OVLE_ERROR;
     }
 
     return fd;

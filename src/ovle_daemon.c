@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>  /* pid_t */
 
+#include "ovle_config.h"
 #include "ovle_daemon.h"
 
 extern pid_t ovle_pid;
@@ -19,7 +20,7 @@ ovle_daemon(void)
     switch (fork()) {
         case -1:
             fprintf(stderr, "fork() failed");
-            return -1;
+            return OVLE_ERROR;
 
         case 0:
             break;
@@ -32,7 +33,7 @@ ovle_daemon(void)
 
     if (setsid() == -1) {
         fprintf(stderr, "setsid() failed\n");
-        return -1;
+        return OVLE_ERROR;
     }
 
     (void) umask(0);   /* clear any inherited file mode creation mask */
@@ -41,30 +42,30 @@ ovle_daemon(void)
     fd = open("/dev/null", O_RDWR);
     if (fd == -1) {
         fprintf(stderr, "open(\"/dev/null\") failed\n");
-        return -1;
+        return OVLE_ERROR;
     }
 
     if (dup2(fd, STDIN_FILENO) == -1) {
         fprintf(stderr, "dup2(STDIN) failed\n");
-        return -1;
+        return OVLE_ERROR;
     }
     
     if (dup2(fd, STDOUT_FILENO) == -1) {
         fprintf(stderr, "dup2(STDOUT) failed\n");
-        return -1;
+        return OVLE_ERROR;
     }
 
     if (dup2(fd, STDERR_FILENO) == -1) {
         fprintf(stderr, "dup2(STDERR) failed\n");
-        return -1;
+        return OVLE_ERROR;
     }
 
     if (fd > STDERR_FILENO) {
         if (close(fd) == -1) {
             fprintf(stderr, "close(\"/dev/null\") failed\n");
-            return -1;
+            return OVLE_ERROR;
         }
     }
 
-    return 0;
+    return OVLE_OK;
 }

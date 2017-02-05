@@ -16,9 +16,9 @@
 #include "ovle_string.h"
 
 int
-ovle_moodle_get_token(int fd, char *token)
+ovle_mdl_get_token(int fd, char *token)
 {
-    int rv;
+    int content_length;
     int statuscode;
     ssize_t bytes;
     int http_request_len, http_body_len, host_len;
@@ -26,14 +26,14 @@ ovle_moodle_get_token(int fd, char *token)
     char http_response[BUFSIZ];
     struct ovle_buf buf;
     struct json_parse j;
-    struct ovle_http_parse_header h;
     char host[HOST_NAME_MAX + 1];
 
     host_len = u.host_end - u.host_start;
     (void) memcpy(host, u.host_start, host_len);
     host[host_len] = '\0';
 
-    http_body_len = snprintf(http_request_body, sizeof http_request_body, "username=%s&password=%s&service=%s",
+    http_body_len = snprintf(http_request_body, sizeof http_request_body,
+                            "username=%s&password=%s&service=%s",
                             username, password, service);
 
     /* TODO: uri encode HTTP body */
@@ -55,59 +55,41 @@ ovle_moodle_get_token(int fd, char *token)
 
     send(fd, http_request, http_request_len, MSG_NOSIGNAL);
 
-    /* TODO: recv() all bytes */
-
-    bytes = recv(fd, http_response, sizeof http_response, 0);
-
-    if (bytes == -1)
-        return -1;
-
-    if (bytes == 0)
-        return -1;
-
-    if (bytes > sizeof http_response) {
-        fprintf(stderr, "HTTP response too large\n");
-        return -1;
-    }
-
     buf.start = http_response;
     buf.pos = http_response;
-    buf.end = http_response + bytes;
+    buf.last = http_response;
+    buf.end = http_response + sizeof http_response;
 
-    if (ovle_http_parse_status_line(&buf, &statuscode) == -1)
-        return -1;
+    buf.state = 0;
+
+    if (ovle_http_process_status_line(fd, &buf, &statuscode) == -1)
+        return OVLE_ERROR;
 
     if (statuscode != 200)
-        return -1;
+        return OVLE_ERROR;
 
-    for (;;) {
-        rv = ovle_http_parse_header_line(&buf, &h);
-
-        if (rv == -1)
-            return -1;
-
-        if (rv == 3)
-            break;
-    }
+    if (ovle_http_process_response_headers(fd, &buf, &content_length) == -1)
+        return OVLE_ERROR;
 
     if (ovle_json_parse_moodle_token(&buf, &j) == -1)
-        return -1;
+        return OVLE_ERROR;
 
     if (j.error)
-        return -1;
+        return OVLE_ERROR;
 
     (void) memcpy(token, j.value_start, OVLE_MD5_HASH_LEN);
     token[OVLE_MD5_HASH_LEN] = '\0';
 
     ovle_log_debug1("Moodle user token %s", token);
 
-    return 0;
+    return OVLE_OK;
 }
 
 int
-ovle_get_moodle_userid(int fd, const char *token, char *userid)
+ovle_mdl_get_userid(int fd, const char *token, char *userid)
 {
     int rv;
+    int content_length;
     int statuscode;
     ssize_t bytes;
     int http_request_len;
@@ -117,7 +99,6 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
     char http_response[BUFSIZ];
     struct ovle_buf buf;
     struct json_parse j;
-    struct ovle_http_parse_header h;
     char host[HOST_NAME_MAX + 1];
 
     host_len = u.host_end - u.host_start;
@@ -134,53 +115,28 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
 
     send(fd, http_request, http_request_len, MSG_NOSIGNAL);
 
-    /* TODO: recv() all bytes */
-
-    bytes = recv(fd, http_response, sizeof http_response, 0);
-
-    if (bytes == -1)
-        return -1;
-
-    if (bytes == 0)
-        return -1;
-
-    if (bytes > sizeof http_response) {
-        fprintf(stderr, "HTTP response too large\n");
-        return -1;
-    }
-
     buf.start = http_response;
     buf.pos = http_response;
-    buf.end = http_response + bytes;
+    buf.last = http_response;
+    buf.end = http_response + sizeof http_response;
 
-    if (ovle_http_parse_status_line(&buf, &statuscode) == -1)
-        return -1;
+    buf.state = 0;
+
+    if (ovle_http_process_status_line(fd, &buf, &statuscode) == -1)
+        return OVLE_ERROR;
 
     if (statuscode != 200)
-        return -1;
+        return OVLE_ERROR;
 
-    for (;;) {
-        rv = ovle_http_parse_header_line(&buf, &h);
-
-        if (rv == -1)
-            return -1;
-
-        if (rv == 3)
-            break;
-    }
+    if (ovle_http_process_response_headers(fd, &buf, &content_length) == -1)
+        return OVLE_ERROR;
 
     j.state = 0;
 
     for (;;) {
         rv = ovle_json_parse_object_member(&buf, &j);
 
-        if (rv == -1)
-            return -1;
-
-        if (rv == 3)
-            break;
-
-        if (rv == 0) {
+        if (rv == OVLE_OK) {
             name_len = j.name_end - j.name_start;
             name = j.name_start;
             name[name_len] = '\0';
@@ -202,26 +158,33 @@ ovle_get_moodle_userid(int fd, const char *token, char *userid)
                 break;
             }
         }
+
+        if (rv == 3)
+            break;
+
+        if (rv == OVLE_ERROR)
+            return OVLE_ERROR;
     }
 
     ovle_log_debug1("Moodle userid %s", userid);
 
-    return 0;
+    return OVLE_OK;
 }
 
 int
-ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
+ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
 {
     int rv;
     int statuscode;
     int file_fd;
+    int content_length;
     int http_request_len;
     char http_request[BUFSIZ];
     char http_response[BUFSIZ];
     char response2[BUFSIZ];
     ssize_t bytes;
-    size_t name_len, field_len, val_len, host_len;
-    char *name, *field, *value;
+    size_t name_len, val_len, host_len;
+    char *name, *value;
     char *id, *shortname;
     struct ovle_http_parse_header h;
     struct ovle_buf buf;
@@ -242,74 +205,34 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
 
     send(sockfd, http_request, http_request_len, MSG_NOSIGNAL);
 
-    /* TODO: recv() all bytes */
-
-    bytes = recv(sockfd, http_response, sizeof http_response, 0);
-
-    if (bytes == -1)
-        return -1;
-
-    if (bytes == 0)
-        return -1;
-
-    if (bytes > sizeof http_response) {
-        fprintf(stderr, "HTTP response too large\n");
-        return -1;
-    }
-
     buf.start = http_response;
     buf.pos = http_response;
-    buf.end = http_response + bytes;
+    buf.last = http_response;
+    buf.end = http_response + sizeof http_response;
 
-    if (ovle_http_parse_status_line(&buf, &statuscode) == -1)
-        return -1;
+    buf.state = 0;
+
+    if (ovle_http_process_status_line(sockfd, &buf, &statuscode) == -1)
+        return OVLE_ERROR;
 
     if (statuscode != 200)
-        return -1;
+        return OVLE_ERROR;
 
-    for (;;) {
-        rv = ovle_http_parse_header_line(&buf, &h);
-
-        if (rv == 3)
-            break;
-
-        if (rv == 0) {
-            field_len = h.field_end - h.field_start;
-            field = h.field_start;
-            field[field_len] = '\0';
-
-            val_len = h.value_end - h.value_start;
-            value = h.value_start;
-            value[val_len] = '\0';
-
-            ovle_log_debug2("header %s: %s", field, value);
-        }
-    }
+    if (ovle_http_process_response_headers(sockfd, &buf, &content_length) == -1)
+        return OVLE_ERROR;
 
     j.state = 0;
 
     for (;;) {
         rv = ovle_json_parse_array_element(&buf, &j);
 
-        if (rv == -1)
-            return -1;
-
-        if (rv == 3)
-            break;
-
-        if (rv == 0) {
+        if (rv == OVLE_OK) {
             k.state = 0;
 
             for (;;) {
                 rv = ovle_json_parse_object_member(&buf, &k);
 
-                if (rv == -1)
-                    return -1;
-
-                if (rv == 3)
-                    break;
-
-                if (rv == 0) {
+                if (rv == OVLE_OK) {
                     name_len = k.name_end - k.name_start;
                     name = k.name_start;
                     name[name_len] = '\0';
@@ -326,17 +249,23 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
                     if (name_len == 9 && ovle_str9cmp(name, 's', 'h', 'o', 'r', 't', 'n', 'a', 'm', 'e'))
                         shortname = value;
                 }
+
+                if (rv == 3)
+                    break;
+
+                if (rv == OVLE_ERROR)
+                    return OVLE_ERROR;
             }
 
             if (chdir(shortname) == -1) {
                 if (errno == ENOENT) {
                     if (mkdir(shortname, 0777) == -1) {
                         fprintf(stderr, "mkdir(%s) failed\n", shortname);
-                        return -1;
+                        return OVLE_ERROR;
                     }
                 } else {
                     fprintf(stderr, "chdir(\"%s\") failed\n", shortname);
-                    return -1;
+                    return OVLE_ERROR;
                 }
             }
 
@@ -369,7 +298,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
 
             // file_fd = open("test.pdf", O_RDWR | O_CREAT, 0644);
             // if (file_fd == -1)
-            //     return 1;
+            //     return OVLE_ERROR;
 
             // bytes_received = 0;
 
@@ -377,7 +306,7 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
             //     bytes = recv(sockfd, buf, sizeof buf, 0);
 
             //     if (bytes == -1)
-            //         return -1;
+            //         return OVLE_ERROR;
 
             //     if (bytes == 0)
             //         break;
@@ -388,9 +317,15 @@ ovle_sync_moodle_content(int sockfd, const char *token, const char *userid)
             // }
 
             // if (bytes_received == 0)
-            //     return -1;
+            //     return OVLE_ERROR;
         }
+
+        if (rv == 3)
+            break;
+
+        if (rv == OVLE_ERROR)
+            return OVLE_ERROR;
     }
 
-    return 0;
+    return OVLE_OK;
 }

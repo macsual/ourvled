@@ -1,12 +1,116 @@
 #include <ctype.h>
+#include <errno.h>
 #include <stdint.h>     /* UINT16_MAX */
+#include <stdlib.h>
+#include <string.h>
+
+#include <sys/types.h>
 
 #include "ovle_config.h"
 #include "ovle_http.h"
+#include "ovle_log.h"
 
 #define CR      '\r'
 #define LF      '\n'
 #define CRLF    "\r\n"
+
+int
+ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
+{
+    int rv;
+    ssize_t bytes;
+
+    rv = OVLE_AGAIN;
+
+    for (;;) {
+        if (rv == OVLE_AGAIN) {
+            bytes = recv(fd, b->last, b->end - b->last, MSG_DONTWAIT);
+
+            if (bytes == -1) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    continue;
+                else
+                    return OVLE_ERROR;
+            }
+
+            if (bytes == 0) {
+                ovle_log_debug0("server prematurely closed connection");
+                return OVLE_ERROR;
+            }
+
+            b->last += bytes;
+        }
+
+        rv = ovle_http_parse_status_line(b, statuscode);
+
+        if (rv == OVLE_OK) {
+            ovle_log_debug1("http status %d", *statuscode);
+
+            return OVLE_OK;
+        }
+
+        if (rv == OVLE_ERROR)
+            return OVLE_ERROR;
+    }
+}
+
+int
+ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_length)
+{
+    int rv;
+    char *field, *value;
+    ssize_t bytes;
+    size_t field_len, val_len;
+    struct ovle_http_parse_header h;
+
+    for (;;) {
+        if (rv == OVLE_AGAIN) {
+            bytes = recv(fd, b->last, b->end - b->last, MSG_DONTWAIT);
+
+            if (bytes == -1) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    continue;
+                else
+                    return OVLE_ERROR;
+            }
+
+            if (bytes == 0) {
+                ovle_log_debug0("server prematurely closed connection");
+                return OVLE_ERROR;
+            }
+
+            b->last += bytes;
+        }
+
+        rv = ovle_http_parse_header_line(b, &h);
+
+        if (rv == OVLE_OK) {
+            field_len = h.field_end - h.field_start;
+            field = h.field_start;
+            field[field_len] = '\0';
+
+            val_len = h.value_end - h.value_start;
+            value = h.value_start;
+            value[val_len] = '\0';
+
+            if (strcmp(field, "Content-Length") == 0)
+                *content_length = atoi(value);
+
+            ovle_log_debug2("http header: \"%s: %s\"", field, value);
+
+            continue;
+        }
+
+        if (rv == 3)
+            return OVLE_OK;
+
+        /* an error occured while parsing header line */
+
+        ovle_log_debug0("server sent invalid header");
+
+        return OVLE_ERROR;
+    }
+}
 
 int
 ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
@@ -31,9 +135,9 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
         sw_almost_done
     } state;
 
-    state = sw_start;
+    state = b->state;
 
-    for (p = b->pos; p < b->end; p++) {
+    for (p = b->pos; p < b->last; p++) {
         ch = *p;
 
         switch (state) {
@@ -46,7 +150,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
                 break;
 
@@ -57,7 +161,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
                 break;
 
@@ -68,7 +172,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         break;
                     
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
                 break;
 
@@ -79,7 +183,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
                 break;
 
@@ -90,14 +194,14 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
                 break;
 
             /* the first digit of major HTTP version */
             case sw_first_major_digit:
                 if (ch < '1' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 state = sw_major_digit;
                 break;
@@ -110,14 +214,14 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                 }
 
                 if (ch < '0' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 break;
 
             /* the first digit of minor HTTP version */
             case sw_first_minor_digit:
                 if (ch < '0' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 state = sw_minor_digit;
                 break;
@@ -130,7 +234,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                 }
 
                 if (ch < '0' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 break;
 
@@ -138,7 +242,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
 
             case sw_status_first_digit:
                 if (ch < '0' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 *statuscode = ch - '0';
 
@@ -147,7 +251,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
 
             case sw_status_second_digit:
                 if (ch < '0' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 *statuscode = *statuscode * 10 + ch - '0';
 
@@ -156,7 +260,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
 
             case sw_status_third_digit:
                 if (ch < '0' || ch > '9')
-                    return -1;
+                    return OVLE_ERROR;
 
                 *statuscode = *statuscode * 10 + ch - '0';
 
@@ -178,7 +282,7 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         goto done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
                 break;
 
@@ -201,16 +305,22 @@ ovle_http_parse_status_line(struct ovle_buf *b, int *statuscode)
                         goto done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
         }
     }
 
+    b->pos = p;
+    b->state = state;
+
+    return OVLE_AGAIN;
+
 done:
 
     b->pos = p + 1;
+    b->state = sw_start;
 
-    return 0;
+    return OVLE_OK;
 }
 
 int
@@ -228,9 +338,9 @@ ovle_http_parse_header_line(struct ovle_buf *b, struct ovle_http_parse_header *h
         sw_header_almost_done
     } state;
 
-    state = sw_start;
+    state = b->state;
 
-    for (p = b->pos; p < b->end; p++) {
+    for (p = b->pos; p < b->last; p++) {
         ch = *p;
 
         switch (state) {
@@ -351,8 +461,9 @@ ovle_http_parse_header_line(struct ovle_buf *b, struct ovle_http_parse_header *h
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
+
                 break;
 
             /* end of header */
@@ -362,20 +473,27 @@ ovle_http_parse_header_line(struct ovle_buf *b, struct ovle_http_parse_header *h
                         goto header_done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
         }
     }
 
+    b->pos = p;
+    b->state = state;
+
+    return OVLE_AGAIN;
+
 done:
 
     b->pos = p + 1;
+    b->state = sw_start;
 
-    return 0;
+    return OVLE_OK;
 
 header_done:
 
     b->pos = p + 1;
+    b->state = sw_start;
 
     return 3;
 }
@@ -421,7 +539,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -434,7 +552,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -447,7 +565,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -460,7 +578,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -479,7 +597,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -491,7 +609,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -508,7 +626,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -520,7 +638,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -571,7 +689,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         goto done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -595,7 +713,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 }
 
                 if (u->port > UINT16_MAX)
-                    return -1;
+                    return OVLE_ERROR;
 
                 switch (ch) {
                     case '\0':  /* fall through */
@@ -604,7 +722,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         goto done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -613,5 +731,5 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
 
 done:
 
-    return 0;
+    return OVLE_OK;
 }

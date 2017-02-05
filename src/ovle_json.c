@@ -40,7 +40,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -55,7 +55,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -71,7 +71,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -88,7 +88,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -105,7 +105,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -122,7 +122,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -141,7 +141,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -153,7 +153,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -168,7 +168,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -188,7 +188,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -201,7 +201,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
             case sw_value_token_first_symbol:
                 /* TODO: check if hex alpha symbol is lowercase */
                 if (!isxdigit(ch))
-                    return -1;
+                    return OVLE_ERROR;
 
                 j->value_start = p;
                 state = sw_value_token;
@@ -228,7 +228,7 @@ ovle_json_parse_moodle_token(struct ovle_buf *b, struct json_parse *j)
                         goto done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -274,11 +274,11 @@ done:
 
     len = j->value_end - j->value_start;
     if (len != OVLE_MD5_HASH_LEN)
-        return -1;
+        return OVLE_ERROR;
 
 #endif
 
-    return 0;
+    return OVLE_OK;
 }
 
 int
