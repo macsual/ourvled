@@ -194,7 +194,7 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
     char *name, *value;
     char *id, *shortname;
     struct ovle_http_parse_header h;
-    struct ovle_buf buf;
+    struct ovle_buf buf, buf2;
     struct json_parse j, k;
     char host[HOST_NAME_MAX + 1];
 
@@ -288,20 +288,21 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
 
             send(sockfd, http_request, http_request_len, MSG_NOSIGNAL);
 
-            /* TODO: recv() all */
+            buf2.start = response2;
+            buf2.pos = response2;
+            buf2.last = response2;
+            buf2.end = response2 + sizeof response2;
 
-            bytes = recv(sockfd, response2, sizeof response2, 0);
+            buf2.state = 0;
 
-            if (bytes == -1)
+            if (ovle_http_process_status_line(sockfd, &buf2, &statuscode) == OVLE_ERROR)
                 return OVLE_ERROR;
 
-            if (bytes == 0)
+            if (statuscode != 200)
                 return OVLE_ERROR;
 
-            if (bytes > sizeof response2) {
-                fprintf(stderr, "HTTP response too large\n");
+            if (ovle_http_process_response_headers(sockfd, &buf2, &content_length) == OVLE_ERROR)
                 return OVLE_ERROR;
-            }
 
             // send(sockfd, request, len, MSG_NOSIGNAL);
 
