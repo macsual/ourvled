@@ -269,7 +269,7 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
             if (chdir(shortname) == -1) {
                 if (errno == ENOENT) {
                     if (mkdir(shortname, 0777) == -1) {
-                        fprintf(stderr, "mkdir(%s) failed\n", shortname);
+                        fprintf(stderr, "mkdir(\"%s\") failed\n", shortname);
                         return OVLE_ERROR;
                     }
                 } else {
