@@ -154,7 +154,7 @@ ovle_mdl_get_userid(int fd, const char *token, char *userid)
              * generated and inconsequential to the program flow.
              */
             if (name_len == 6 && ovle_str6cmp(name, 'u', 's', 'e', 'r', 'i', 'd')) {
-                (void) ovle_strlcpy(userid, value, INT64_LEN + 1);
+                (void) ovle_strlcpy(userid, value, OVLE_INT32_LEN + 1);
                 break;
             }
         }

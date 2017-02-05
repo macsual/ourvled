@@ -142,7 +142,7 @@ int
 main(int argc, char *argv[])
 {
     int ourvle_fd;
-    char userid[INT64_LEN + 1];
+    char userid[OVLE_INT32_LEN + 1];
 
     if (ovle_get_options(argc, argv) == OVLE_ERROR)
         return 0;
