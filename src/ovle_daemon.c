@@ -26,7 +26,7 @@ ovle_daemon(void)
             break;
 
         default:
-            exit(0);
+            exit(EXIT_SUCCESS);
     }
 
     ovle_pid = getpid();

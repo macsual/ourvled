@@ -149,22 +149,22 @@ main(int argc, char *argv[])
 
     if (ovle_show_version) {
         ovle_show_version_info();
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     if (ovle_show_help) {
         ovle_show_help_text();
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     ovle_pid = getpid();
 
     if (ovle_read_config() == OVLE_ERROR)
-        return 1;
+        return EXIT_FAILURE;
 
     if (ovle_daemon_flag) {
         if (ovle_daemon() == OVLE_ERROR)
-            return 1;
+            return EXIT_FAILURE;
     }
 
     /*
@@ -172,33 +172,33 @@ main(int argc, char *argv[])
      * write the demonised process pid
      */
     if (ovle_create_pidfile("ourvle.pid") == OVLE_ERROR)
-        return 1;
+        return EXIT_FAILURE;
 
     for (;;) {
         ourvle_fd = ovle_http_open_connection(&u);
         if (ourvle_fd == OVLE_ERROR) {
             fprintf(stderr, "failed to open HTTP connection\n");
-            return 1;
+            return EXIT_FAILURE;
         }
 
         if (ovle_mdl_get_token(ourvle_fd, token) == OVLE_ERROR) {
             fprintf(stderr, "failed to get Moodle user token\n");
-            return 1;
+            return EXIT_FAILURE;
         }
 
         if (ovle_mdl_get_userid(ourvle_fd, token, userid) == OVLE_ERROR) {
             fprintf(stderr, "failed to get Moodle userid\n");
-            return 1;
+            return EXIT_FAILURE;
         }
 
         if (ovle_mdl_sync_course_content(ourvle_fd, token, userid) == OVLE_ERROR) {
             fprintf(stderr, "failed to sync Moodle course content\n");
-            return 1;
+            return EXIT_FAILURE;
         }
 
         if (close(ourvle_fd) == -1)
             fprintf(stderr, "close() failed\n");
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
