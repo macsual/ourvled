@@ -7,8 +7,7 @@
 #include "ovle_moodle.h"
 
 #define OVLE_INT32_LEN  (sizeof "-2147483648" - 1)
-#define INT64_LEN   (sizeof "-9223372036854775808" - 1)
-#define UINT16_LEN  (sizeof "65535" - 1)
+#define OVLE_INT64_LEN  (sizeof "-9223372036854775808" - 1)
 
 #define OVLE_OK      0
 #define OVLE_ERROR  -1

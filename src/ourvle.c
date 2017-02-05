@@ -110,7 +110,7 @@ static int
 ovle_create_pidfile(const char *name)
 {
     int     fd, len;
-    char    pid[INT64_LEN + 2];    /* 2 is for newline & null-character */
+    char    pid[OVLE_INT64_LEN + 2];    /* 2 is for newline & null-character */
 
     fd = open(name, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
