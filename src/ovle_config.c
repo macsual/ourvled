@@ -107,7 +107,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -121,7 +121,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                         break;
 
                     case ';':
-                        return -1;
+                        return OVLE_ERROR;
 
                     default:
                         c->value_start = p;
@@ -160,7 +160,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
                         goto done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -171,7 +171,7 @@ done:
 
     buf->pos = p + 1;
 
-    return 0;
+    return OVLE_OK;
 }
 
 int
@@ -192,7 +192,7 @@ ovle_read_config(void)
 
     home_path = getenv("HOME");
     if (home_path == NULL)
-        return -1;
+        return OVLE_ERROR;
 
     (void) snprintf(conf_file_path, sizeof conf_file_path, "%s/." PACKAGE_NAME, home_path);
 

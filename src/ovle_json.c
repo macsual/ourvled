@@ -321,7 +321,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -336,7 +336,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -348,11 +348,11 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
 
             case sw_name:
                 if (iscntrl(ch))
-                    return -1;
+                    return OVLE_ERROR;
 
                 /* TODO: handle escape characters */
                 if (ch == '\\')
-                    return -1;
+                    return OVLE_ERROR;
 
                 if (ch == '"') {
                     j->name_end = p;
@@ -369,7 +369,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -407,7 +407,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                             break;
                         }
 
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -438,7 +438,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                         goto member_done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -465,7 +465,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                 if (ch == '}')
                     goto member_done;
 
-                return -1;
+                return OVLE_ERROR;
 
                 break;
 
@@ -486,7 +486,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                 if (ch == '}')
                     goto member_done;
 
-                return -1;
+                return OVLE_ERROR;
 
                 break;
 
@@ -505,7 +505,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -522,7 +522,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                 if (ch == '}')
                     goto member_done;
 
-                return -1;
+                return OVLE_ERROR;
 
                 break;
 
@@ -574,7 +574,7 @@ ovle_json_parse_object_member(struct ovle_buf *b, struct json_parse *j)
                         goto member_done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -586,7 +586,7 @@ done:
     b->pos = p + 1;
     j->state = sw_name_lquot;
 
-    return 0;
+    return OVLE_OK;
 
 member_done:
 
@@ -625,7 +625,7 @@ ovle_json_parse_array_element(struct ovle_buf *b, struct json_parse *j)
                         break;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -714,7 +714,7 @@ ovle_json_parse_array_element(struct ovle_buf *b, struct json_parse *j)
                         goto element_done;
 
                     default:
-                        return -1;
+                        return OVLE_ERROR;
                 }
 
                 break;
@@ -726,7 +726,7 @@ done:
     b->pos = p + 1;
     j->state = sw_space_before_value;
 
-    return 0;
+    return OVLE_OK;
 
 element_done:
 

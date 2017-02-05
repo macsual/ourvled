@@ -62,16 +62,16 @@ ovle_mdl_get_token(int fd, char *token)
 
     buf.state = 0;
 
-    if (ovle_http_process_status_line(fd, &buf, &statuscode) == -1)
+    if (ovle_http_process_status_line(fd, &buf, &statuscode) == OVLE_ERROR)
         return OVLE_ERROR;
 
     if (statuscode != 200)
         return OVLE_ERROR;
 
-    if (ovle_http_process_response_headers(fd, &buf, &content_length) == -1)
+    if (ovle_http_process_response_headers(fd, &buf, &content_length) == OVLE_ERROR)
         return OVLE_ERROR;
 
-    if (ovle_json_parse_moodle_token(&buf, &j) == -1)
+    if (ovle_json_parse_moodle_token(&buf, &j) == OVLE_ERROR)
         return OVLE_ERROR;
 
     if (j.error) {
@@ -127,13 +127,13 @@ ovle_mdl_get_userid(int fd, const char *token, char *userid)
 
     buf.state = 0;
 
-    if (ovle_http_process_status_line(fd, &buf, &statuscode) == -1)
+    if (ovle_http_process_status_line(fd, &buf, &statuscode) == OVLE_ERROR)
         return OVLE_ERROR;
 
     if (statuscode != 200)
         return OVLE_ERROR;
 
-    if (ovle_http_process_response_headers(fd, &buf, &content_length) == -1)
+    if (ovle_http_process_response_headers(fd, &buf, &content_length) == OVLE_ERROR)
         return OVLE_ERROR;
 
     j.state = 0;
@@ -219,13 +219,13 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
 
     buf.state = 0;
 
-    if (ovle_http_process_status_line(sockfd, &buf, &statuscode) == -1)
+    if (ovle_http_process_status_line(sockfd, &buf, &statuscode) == OVLE_ERROR)
         return OVLE_ERROR;
 
     if (statuscode != 200)
         return OVLE_ERROR;
 
-    if (ovle_http_process_response_headers(sockfd, &buf, &content_length) == -1)
+    if (ovle_http_process_response_headers(sockfd, &buf, &content_length) == OVLE_ERROR)
         return OVLE_ERROR;
 
     j.state = 0;
@@ -293,14 +293,14 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
             bytes = recv(sockfd, response2, sizeof response2, 0);
 
             if (bytes == -1)
-                return -1;
+                return OVLE_ERROR;
 
             if (bytes == 0)
-                return -1;
+                return OVLE_ERROR;
 
             if (bytes > sizeof response2) {
                 fprintf(stderr, "HTTP response too large\n");
-                return -1;
+                return OVLE_ERROR;
             }
 
             // send(sockfd, request, len, MSG_NOSIGNAL);
