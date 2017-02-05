@@ -162,6 +162,8 @@ ovle_mdl_get_userid(int fd, const char *token, char *userid)
                 (void) ovle_strlcpy(userid, value, OVLE_INT32_LEN + 1);
                 break;
             }
+
+            continue;
         }
 
         if (rv == 3)
@@ -253,6 +255,8 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
 
                     if (name_len == 9 && ovle_str9cmp(name, 's', 'h', 'o', 'r', 't', 'n', 'a', 'm', 'e'))
                         shortname = value;
+
+                    continue;
                 }
 
                 if (rv == 3)
@@ -323,6 +327,8 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
 
             // if (bytes_received == 0)
             //     return OVLE_ERROR;
+
+            continue;
         }
 
         if (rv == 3)

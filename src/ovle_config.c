@@ -263,6 +263,8 @@ ovle_read_config(void)
 
                 ip_addr_set = 1;
             }
+
+            continue;
         }
 
         if (rv == 3)
