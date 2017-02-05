@@ -90,7 +90,7 @@ ovle_http_open_connection(struct ovle_http_url *u)
                 continue;
             }
 
-            ((struct sockaddr_in *)p->ai_addr)->sin_port = htons(u->port);
+            ((struct sockaddr_in *) p->ai_addr)->sin_port = htons(u->port);
 
             if (connect(fd, p->ai_addr, sizeof (struct sockaddr_in)) == -1) {
                 if (close(fd) == -1)
