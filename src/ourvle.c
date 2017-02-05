@@ -145,7 +145,7 @@ main(int argc, char *argv[])
     char userid[OVLE_INT32_LEN + 1];
 
     if (ovle_get_options(argc, argv) == OVLE_ERROR)
-        return 0;
+        return EXIT_FAILURE;
 
     if (ovle_show_version) {
         ovle_show_version_info();
