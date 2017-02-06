@@ -7,6 +7,8 @@
 #define LF      '\n'
 #define CRLF    "\r\n"
 
+#define OVLE_HTTP_STATUS_OK     200
+
 struct ovle_buf;
 
 struct ovle_http_parse_header {

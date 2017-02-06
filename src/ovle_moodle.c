@@ -65,7 +65,7 @@ ovle_mdl_get_token(int fd, char *token)
     if (ovle_http_process_status_line(fd, &buf, &statuscode) == OVLE_ERROR)
         return OVLE_ERROR;
 
-    if (statuscode != 200)
+    if (statuscode != OVLE_HTTP_STATUS_OK)
         return OVLE_ERROR;
 
     if (ovle_http_process_response_headers(fd, &buf, &content_length) == OVLE_ERROR)
@@ -130,7 +130,7 @@ ovle_mdl_get_userid(int fd, const char *token, char *userid)
     if (ovle_http_process_status_line(fd, &buf, &statuscode) == OVLE_ERROR)
         return OVLE_ERROR;
 
-    if (statuscode != 200)
+    if (statuscode != OVLE_HTTP_STATUS_OK)
         return OVLE_ERROR;
 
     if (ovle_http_process_response_headers(fd, &buf, &content_length) == OVLE_ERROR)
@@ -222,7 +222,7 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
     if (ovle_http_process_status_line(sockfd, &buf, &statuscode) == OVLE_ERROR)
         return OVLE_ERROR;
 
-    if (statuscode != 200)
+    if (statuscode != OVLE_HTTP_STATUS_OK)
         return OVLE_ERROR;
 
     if (ovle_http_process_response_headers(sockfd, &buf, &content_length) == OVLE_ERROR)
@@ -298,7 +298,7 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
             if (ovle_http_process_status_line(sockfd, &buf2, &statuscode) == OVLE_ERROR)
                 return OVLE_ERROR;
 
-            if (statuscode != 200)
+            if (statuscode != OVLE_HTTP_STATUS_OK)
                 return OVLE_ERROR;
 
             if (ovle_http_process_response_headers(sockfd, &buf2, &content_length) == OVLE_ERROR)
