@@ -22,7 +22,7 @@ ovle_mdl_get_token(int fd, char *token)
     int statuscode;
     ssize_t bytes;
     int http_request_len, http_body_len, host_len;
-    char http_request[BUFSIZ], http_request_body[128];
+    char http_request[BUFSIZ], http_request_body[638 + 1];
     char http_response[BUFSIZ];
     struct ovle_buf buf;
     struct json_parse j;
