@@ -43,6 +43,15 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
 
         rv = ovle_http_parse_status_line(b, statuscode);
 
+        if (rv == OVLE_AGAIN) {
+            if (b->last == b->end) {
+                ovle_log_debug0("server sent a header that is too large");
+                return OVLE_ERROR;
+            }
+
+            continue;
+        }
+
         if (rv == OVLE_OK) {
             ovle_log_debug1("http status %d", *statuscode);
 
@@ -83,6 +92,15 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
         }
 
         rv = ovle_http_parse_header_line(b, &h);
+
+        if (rv == OVLE_AGAIN) {
+             if (b->last == b->end) {
+                ovle_log_debug0("server sent a header that is too large");
+                return OVLE_ERROR;
+            }
+
+            continue;
+        }
 
         if (rv == OVLE_OK) {
             field_len = h.field_end - h.field_start;
