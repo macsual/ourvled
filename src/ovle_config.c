@@ -19,6 +19,8 @@
 #include "ovle_log.h"
 #include "ovle_string.h"    /* ovle_strlcpy() */
 
+#define OVLE_CONF_FILE_DONE     3
+
 int ip_addr_set;
 
 int ovle_daemon_flag;
@@ -59,7 +61,7 @@ ovle_parse_config_token(struct ovle_buf *b, struct ovle_parse *c)
 
         /* config file finished */
         if (p >= b->last)
-            return 3;
+            return OVLE_CONF_FILE_DONE;
 
         switch (state) {
             /* first char */
@@ -265,7 +267,7 @@ ovle_read_config(void)
             continue;
         }
 
-        if (rv == 3)
+        if (rv == OVLE_CONF_FILE_DONE)
             break;
 
         if (rv == OVLE_ERROR)
