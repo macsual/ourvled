@@ -37,10 +37,10 @@ struct ovle_parse {
     unsigned char *value_end;
 };
 
-static int ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c);
+static int ovle_parse_config_token(struct ovle_buf *b, struct ovle_parse *c);
 
 static int
-ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
+ovle_parse_config_token(struct ovle_buf *b, struct ovle_parse *c)
 {
     unsigned char ch;
     unsigned char *p;
@@ -55,11 +55,11 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
 
     state = sw_start;
 
-    for (p = buf->pos; /* void */; p++) {
+    for (p = b->pos; /* void */; p++) {
         ch = *p;
 
         /* config file finished */
-        if (p >= buf->last)
+        if (p >= b->last)
             return 3;
 
         switch (state) {
@@ -169,7 +169,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
 
 done:
 
-    buf->pos = p + 1;
+    b->pos = p + 1;
 
     return OVLE_OK;
 }
