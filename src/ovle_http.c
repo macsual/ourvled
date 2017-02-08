@@ -20,6 +20,8 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
     int rv;
     ssize_t bytes;
 
+    ovle_log_debug0("http process status line");
+
     rv = OVLE_AGAIN;
 
     for (;;) {
@@ -119,8 +121,10 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
             continue;
         }
 
-        if (rv == 3)
+        if (rv == 3) {
+            ovle_log_debug0("http response header done");
             return OVLE_OK;
+        }
 
         /* an error occured while parsing header line */
 
