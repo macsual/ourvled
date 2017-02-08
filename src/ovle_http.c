@@ -74,23 +74,29 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
     size_t field_len, val_len;
     struct ovle_http_parse_header h;
 
+    rv = OVLE_AGAIN;
+
     for (;;) {
         if (rv == OVLE_AGAIN) {
-            bytes = recv(fd, b->last, b->end - b->last, MSG_DONTWAIT);
+            bytes = b->last - b->pos;
 
-            if (bytes == -1) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK)
-                    continue;
-                else
+            if (bytes <= 0) {
+                bytes = recv(fd, b->last, b->end - b->last, MSG_DONTWAIT);
+
+                if (bytes == -1) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                        continue;
+                    else
+                        return OVLE_ERROR;
+                }
+
+                if (bytes == 0) {
+                    ovle_log_debug0("server prematurely closed connection");
                     return OVLE_ERROR;
-            }
+                }
 
-            if (bytes == 0) {
-                ovle_log_debug0("server prematurely closed connection");
-                return OVLE_ERROR;
+                b->last += bytes;
             }
-
-            b->last += bytes;
         }
 
         rv = ovle_http_parse_header_line(b, &h);
