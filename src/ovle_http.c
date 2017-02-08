@@ -45,23 +45,21 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
 
         rv = ovle_http_parse_status_line(b, statuscode);
 
-        if (rv == OVLE_AGAIN) {
-            if (b->last == b->end) {
-                ovle_log_debug0("server sent a header that is too large");
-                return OVLE_ERROR;
-            }
-
-            continue;
-        }
-
         if (rv == OVLE_OK) {
-            ovle_log_debug1("http status %d", *statuscode);
-
+            ovle_log_debug1("http status code %d", *statuscode);
             return OVLE_OK;
         }
 
-        if (rv == OVLE_ERROR)
+        /* an error occurred while parsing status line */
+        if (rv != OVLE_AGAIN)
             return OVLE_ERROR;
+
+        /* OVLE_AGAIN: the parsing of the status line is incomplete */
+
+        if (b->last == b->end) {
+            ovle_log_debug0("server sent a reason phrase that is too long");
+            return OVLE_ERROR;
+        }
     }
 }
 
