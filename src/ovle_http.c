@@ -51,8 +51,10 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
         }
 
         /* an error occurred while parsing status line */
-        if (rv != OVLE_AGAIN)
+        if (rv == OVLE_ERROR) {
+            fprintf(stderr, "server sent an invalid HTTP/1.1 header\n");
             return OVLE_ERROR;
+        }
 
         /* OVLE_AGAIN: the parsing of the status line is incomplete */
 
