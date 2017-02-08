@@ -59,7 +59,7 @@ ovle_parse_config_token(struct ovle_buf *buf, struct ovle_parse *c)
         ch = *p;
 
         /* config file finished */
-        if (p >= buf->end)
+        if (p >= buf->last)
             return 3;
 
         switch (state) {
@@ -228,7 +228,8 @@ ovle_read_config(void)
 
     b.start = buf;
     b.pos = buf;
-    b.end = buf + file_size;
+    b.last = buf + file_size;
+    b.end = buf + sizeof buf;
 
     for (;;) {
         rv = ovle_parse_config_token(&b, &c);
