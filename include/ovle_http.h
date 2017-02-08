@@ -9,6 +9,8 @@
 
 #define OVLE_HTTP_STATUS_OK     200
 
+#define OVLE_PARSE_HEADER_DONE  3
+
 struct ovle_buf;
 
 struct ovle_http_parse_header {

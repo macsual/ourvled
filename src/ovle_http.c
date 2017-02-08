@@ -125,7 +125,7 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
             continue;
         }
 
-        if (rv == 3) {
+        if (rv == OVLE_PARSE_HEADER_DONE) {
             ovle_log_debug0("http response header done");
             return OVLE_OK;
         }
@@ -521,7 +521,7 @@ header_done:
     b->pos = p + 1;
     b->state = sw_start;
 
-    return 3;
+    return OVLE_PARSE_HEADER_DONE;
 }
 
 int
