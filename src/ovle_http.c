@@ -36,7 +36,7 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
             }
 
             if (bytes == 0) {
-                ovle_log_debug0("server prematurely closed connection");
+                fprintf(stderr, "server prematurely closed connection\n");
                 return OVLE_ERROR;
             }
 
@@ -68,7 +68,7 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
          * Therefore, the length of the reason phrase is arbitrary.
          */
         if (b->last == b->end) {
-            ovle_log_debug0("server sent a reason phrase that is too long");
+            fprintf(stderr, "server sent a reason phrase that is too long\n");
             return OVLE_ERROR;
         }
     }
@@ -100,7 +100,7 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
                 }
 
                 if (bytes == 0) {
-                    ovle_log_debug0("server prematurely closed connection");
+                    fprintf(stderr, "server prematurely closed connection\n");
                     return OVLE_ERROR;
                 }
 
@@ -112,7 +112,7 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
 
         if (rv == OVLE_AGAIN) {
              if (b->last == b->end) {
-                ovle_log_debug0("server sent a header that is too large");
+                fprintf(stderr, "server sent a header that is too large\n");
                 return OVLE_ERROR;
             }
 
@@ -143,7 +143,7 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
 
         /* an error occured while parsing header line */
 
-        ovle_log_debug0("server sent invalid header");
+        fprintf(stderr, "server sent invalid header line\n");
 
         return OVLE_ERROR;
     }
