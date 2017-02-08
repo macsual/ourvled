@@ -58,6 +58,15 @@ ovle_http_process_status_line(int fd, struct ovle_buf *b, int *statuscode)
 
         /* OVLE_AGAIN: the parsing of the status line is incomplete */
 
+        /*
+         * The HTTP response buffer should be large enough to store up to at
+         * least the space after the status code part of the status line.
+         * RFC 2616 Section 6.1.1 p. 40 states:
+         *      "The reason phrases listed here are only
+         *      recommendations -- they MAY be replaced by local equivalents
+         *      without affecting the protocol."
+         * Therefore, the length of the reason phrase is arbitrary.
+         */
         if (b->last == b->end) {
             ovle_log_debug0("server sent a reason phrase that is too long");
             return OVLE_ERROR;
