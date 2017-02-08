@@ -21,16 +21,11 @@ ovle_mdl_get_token(int fd, char *token)
     int content_length;
     int statuscode;
     ssize_t bytes;
-    int http_request_len, http_body_len, host_len;
+    int http_request_len, http_body_len;
     char http_request[BUFSIZ], http_request_body[638 + 1];
     char http_response[BUFSIZ];
     struct ovle_buf buf;
     struct json_parse j;
-    char host[HOST_NAME_MAX + 1];
-
-    host_len = u.host_end - u.host_start;
-    (void) memcpy(host, u.host_start, host_len);
-    host[host_len] = '\0';
 
     http_body_len = snprintf(http_request_body, sizeof http_request_body,
                             "username=%s&password=%s&service=%s",
@@ -45,7 +40,7 @@ ovle_mdl_get_token(int fd, char *token)
                                 "Content-Length: %d" CRLF
                                 CRLF
                                 "%s",
-                                host, http_body_len, http_request_body);
+                                u.host, http_body_len, http_request_body);
 
     /*
      * TODO:
@@ -98,23 +93,18 @@ ovle_mdl_get_userid(int fd, const char *token, char *userid)
     int statuscode;
     ssize_t bytes;
     int http_request_len;
-    size_t name_len, val_len, host_len;
+    size_t name_len, val_len;
     char *name, *value;
     char http_request[BUFSIZ];
     char http_response[BUFSIZ];
     struct ovle_buf buf;
     struct json_parse j;
-    char host[HOST_NAME_MAX + 1];
-
-    host_len = u.host_end - u.host_start;
-    (void) memcpy(host, u.host_start, host_len);
-    host[host_len] = '\0';
 
     http_request_len = snprintf(http_request, sizeof http_request,
                                 "GET /webservice/rest/server.php?wstoken=%s&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json HTTP/1.1" CRLF
                                 "Host: %s" CRLF
                                 CRLF,
-                                token, host);
+                                token, u.host);
 
     /* TODO: send() all bytes */
 
@@ -190,23 +180,18 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
     char http_response[BUFSIZ];
     char response2[BUFSIZ];
     ssize_t bytes;
-    size_t name_len, val_len, host_len;
+    size_t name_len, val_len;
     char *name, *value;
     char *id, *shortname;
     struct ovle_http_parse_header h;
     struct ovle_buf buf, buf2;
     struct json_parse j, k;
-    char host[HOST_NAME_MAX + 1];
-
-    host_len = u.host_end - u.host_start;
-    (void) memcpy(host, u.host_start, host_len);
-    host[host_len] = '\0';
 
     http_request_len = snprintf(http_request, sizeof http_request,
                                 "GET /webservice/rest/server.php?wstoken=%s&wsfunction=core_enrol_get_users_courses&moodlewsrestformat=json&userid=%s HTTP/1.1" CRLF
                                 "Host: %s" CRLF
                                 CRLF,
-                                token, userid, host);
+                                token, userid, u.host);
 
     /* TODO: send() all bytes */
 
@@ -282,7 +267,7 @@ ovle_mdl_sync_course_content(int sockfd, const char *token, const char *userid)
                                         "GET /webservice/rest/server.php?wstoken=%s&wsfunction=core_course_get_contents&moodlewsrestformat=json&courseid=%s HTTP/1.1" CRLF
                                         "Host: %s" CRLF
                                         CRLF,
-                                        token, id, host);
+                                        token, id, u.host);
 
             /* TODO: send() all */
 

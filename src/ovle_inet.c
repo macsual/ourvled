@@ -23,8 +23,6 @@ ovle_http_open_connection(struct ovle_http_url *u)
 {
     int fd;
     const int tcp_nodelay = 1;
-    size_t host_len;
-    char host[HOST_NAME_MAX + 1];
     struct addrinfo hints;
     struct addrinfo *p, *servinfo;
     struct sockaddr_in addr;
@@ -63,12 +61,8 @@ ovle_http_open_connection(struct ovle_http_url *u)
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
 
-        host_len = u->host_end - u->host_start;
-        (void) memcpy(host, u->host_start, host_len);
-        host[host_len] = '\0';
-
         /* pass NULL to avoid service name resolution */
-        if (getaddrinfo(host, NULL, &hints, &servinfo) != 0) {
+        if (getaddrinfo(u->host, NULL, &hints, &servinfo) != 0) {
             fprintf(stderr, "getaddrinfo() failed\n");
             return OVLE_ERROR;
         }

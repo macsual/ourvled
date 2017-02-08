@@ -525,10 +525,13 @@ header_done:
 }
 
 int
-ovle_http_parse_url(const char *url, struct ovle_http_url *u)
+ovle_http_parse_url(const char *buf, struct ovle_http_url *u)
 {
+    size_t host_len;
     unsigned char c, ch;
     unsigned char *p;
+    unsigned char *host_start, *host_end;
+    unsigned char *port_start, *port_end;
     enum {
         sw_start,
         sw_scheme_h,
@@ -547,7 +550,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
 
     state = sw_start;
 
-    for (p = (unsigned char * ) url; 1/* TODO */; p++) {
+    for (p = (unsigned char * ) buf; 1/* TODO */; p++) {
         ch = *p;
 
         switch (state) {
@@ -670,7 +673,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 break;
 
             case sw_host_start:
-                u->host_start = p;
+                host_start = p;
                 state = sw_host;
 
                 /* fall through */
@@ -692,7 +695,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 /* fall through */
 
             case sw_host_end:
-                u->host_end = p;
+                host_end = p;
 
                 switch (ch) {
                     case ':':
@@ -709,8 +712,8 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                         /* fall through */
 
                     case '/':
-                        u->port_start = p;
-                        u->port_end = p;
+                        port_start = p;
+                        port_end = p;
                         u->port = u->https ? 443 : 80; /* http port defaults */
                         goto done;
 
@@ -721,7 +724,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 break;
 
             case sw_port_start:
-                u->port_start = p;
+                port_start = p;
                 u->port = ch - '0';
                 state = sw_port;
 
@@ -744,7 +747,7 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
                 switch (ch) {
                     case '\0':  /* fall through */
                     case '/':
-                        u->port_end = p;
+                        port_end = p;
                         goto done;
 
                     default:
@@ -756,6 +759,10 @@ ovle_http_parse_url(const char *url, struct ovle_http_url *u)
     }
 
 done:
+
+    host_len = host_end - host_start;
+    (void) memcpy(u->host, host_start, host_len);
+    u->host[host_len] = '\0';
 
     return OVLE_OK;
 }
