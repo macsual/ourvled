@@ -87,6 +87,10 @@ ovle_http_process_response_headers(int fd, struct ovle_buf *b, int *content_leng
 
     for (;;) {
         if (rv == OVLE_AGAIN) {
+            /*
+             * a portion of the next header field(s) to be parsed may have
+             * already been received
+             */
             bytes = b->last - b->pos;
 
             if (bytes <= 0) {
